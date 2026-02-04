@@ -1,0 +1,21 @@
+// build.gradle (raíz) corregido para AhMyth-Client
+// Solo buildscript y repositorios. No aplicar plugin aquí.
+
+buildscript {
+    repositories {
+        google()
+        jcenter()
+    }
+    dependencies {
+        // Usa la versión del plugin de Android compatible con tu Gradle wrapper
+        classpath "com.android.tools.build:gradle:4.1.3"
+        
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        jcenter()
+    }
+}

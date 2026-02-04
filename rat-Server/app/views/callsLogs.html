@@ -1,0 +1,44 @@
+<div>
+  <div class="calls-scroll">
+    <table class="ui very compact striped table full">
+      <thead>
+        <tr>
+          <th>Teléfono</th>
+          <th>Nombre</th>
+          <th>Duración</th>
+          <th>Tipo</th>
+          <th>Fecha</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="call in callsList | limitTo:barLimit">
+          <td ng-bind="call.phoneNo"></td>
+          <td>
+            <span ng-if="!call.name || call.name==''">Desconocido</span>
+            <span ng-if="call.name && call.name!=''" ng-bind="call.name"></span>
+          </td>
+          <td ng-bind="call.duration"></td>
+          <td>
+            <span ng-if="call.type==1">Entrante</span>
+            <span ng-if="call.type==2">Saliente</span>
+            <!-- No muestra nada si no es 1 o 2 -->
+          </td>
+          <td>
+            <span ng-if="call.date" ng-bind="call.date"></span>
+            <span ng-if="!call.date">Sin fecha</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div ng-if="!callsList.length" style="padding: 1em;">
+      <em>No hay llamadas para mostrar.</em>
+    </div>
+  </div>
+</div>
+
+<style>
+.calls-scroll {
+  max-height: 400px;
+  overflow-y: auto;
+}
+</style>

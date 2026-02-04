@@ -1,0 +1,33 @@
+<div style="width: 100%; height: 100%;">
+  <div style="padding: 20px 0; text-align: center;">
+    <button class="ui labeled icon black button" ng-click="$ctrl.Refresh()">
+      <i class="refresh icon"></i>Refresh
+    </button>
+    <button class="ui green button" ng-click="$ctrl.exportHistory()" ng-if="$ctrl.locationsHistory.length > 0" style="margin-left:10px;">
+      <i class="download icon"></i>
+      Exportar historial a Excel
+    </button>
+  </div>
+  <div ng-if="$ctrl.location" style="padding-left: 20px;">
+    <p>
+      <b>Latitud:</b> {{$ctrl.location.lat}}<br>
+      <b>Longitud:</b> {{$ctrl.location.lng}}<br>
+      <b>Accuracy:</b> {{$ctrl.location.accuracy}} metros<br>
+      <b>Fecha:</b> {{$ctrl.location.timestamp | date:'medium'}}
+    </p>
+  </div>
+  <!-- MAPA CENTRADO Y RESPONSIVO -->
+  <div style="display: flex; justify-content: center; margin: 20px 0;">
+    <div id="mapid"
+      style="height: 400px; width: 90vw; max-width: 600px; min-width: 300px; min-height: 250px; background: #f2f2f2; border: 1px solid #ddd; border-radius: 8px;">
+    </div>
+  </div>
+  <div class="ui message" ng-if="$ctrl.locationsHistory.length > 1" style="margin-top:8px;">
+    <b>Historial de posiciones:</b>
+    <ul>
+      <li ng-repeat="loc in $ctrl.locationsHistory">
+        {{loc.lat}}, {{loc.lng}} ({{loc.accuracy}}m) - {{loc.timestamp | date:'medium'}}
+      </li>
+    </ul>
+  </div>
+</div>

@@ -1,0 +1,176 @@
+Signature-Version: 1.0
+Created-By: 1.0 (Android)
+SHA1-Digest-Manifest: P+bPe2LMCpGW74TbVzqrqWpsKHk=
+X-Android-APK-Signed: 2, 3
+
+Name: .DS_Store
+SHA1-Digest: zJ7qPq2u4+TPWYEfXzvzD1T0UHE=
+
+Name: AndroidManifest.xml
+SHA1-Digest: Z0QX9NAu41lfVLocN7zy3GzivjA=
+
+Name: classes.dex
+SHA1-Digest: 9w2XUay+k4XYNxBGsdM00gjInAg=
+
+Name: res/drawable-hdpi/notification_bg_low_normal.9.png
+SHA1-Digest: 9e+GoCiKMLL+nuiJDhNaQ2617ik=
+
+Name: res/drawable-hdpi/notification_bg_low_pressed.9.png
+SHA1-Digest: x1mGBRikEqghSxJeJufKfYT+wWo=
+
+Name: res/drawable-hdpi/notification_bg_normal.9.png
+SHA1-Digest: +O1e4ipcZ1Xjcoxd7VYu0jUGmbc=
+
+Name: res/drawable-hdpi/notification_bg_normal_pressed.9.png
+SHA1-Digest: 0ay6itdFsfv7R/7srPvufRFHGYk=
+
+Name: res/drawable-hdpi/notify_panel_notification_icon_bg.png
+SHA1-Digest: +Cuu3pCfG2H409SXxhqfzzY9o+Y=
+
+Name: res/drawable-mdpi/notification_bg_low_normal.9.png
+SHA1-Digest: SSQCn1YyUn7+fgA2loPMzBeNjHk=
+
+Name: res/drawable-mdpi/notification_bg_low_pressed.9.png
+SHA1-Digest: Xezlrz7EX3ScnS5DvdR2LiBFAWU=
+
+Name: res/drawable-mdpi/notification_bg_normal.9.png
+SHA1-Digest: NKta2J0AzPO3v2Ht8+lzZ+QL0mo=
+
+Name: res/drawable-mdpi/notification_bg_normal_pressed.9.png
+SHA1-Digest: DJgVxUVvKXtz+huXmV8LNT7MBRk=
+
+Name: res/drawable-mdpi/notify_panel_notification_icon_bg.png
+SHA1-Digest: Nv9DOasml9H0+3C2ihqcT1hRYlg=
+
+Name: res/drawable-v21/notification_action_background.xml
+SHA1-Digest: RJYLcn4qQT/U0XnDwxYpfyRTijs=
+
+Name: res/drawable-xhdpi/notification_bg_low_normal.9.png
+SHA1-Digest: Wq32UxSATpzcyZFwSmCbX5kE55w=
+
+Name: res/drawable-xhdpi/notification_bg_low_pressed.9.png
+SHA1-Digest: HtVFxVZKQ3TxSrk7XLELWV6Mox4=
+
+Name: res/drawable-xhdpi/notification_bg_normal.9.png
+SHA1-Digest: fpjJNvbobD5cvWx5cchvSr4nHMs=
+
+Name: res/drawable-xhdpi/notification_bg_normal_pressed.9.png
+SHA1-Digest: FxHyiyiMoMaUs+J1wVzc3Dzv4vE=
+
+Name: res/drawable-xhdpi/notify_panel_notification_icon_bg.png
+SHA1-Digest: LgWW4AbtHEapOZk21ssGL13Gnk8=
+
+Name: res/drawable/notification_bg.xml
+SHA1-Digest: Z+rRwZXLv9tHCXDBcD373AE6i24=
+
+Name: res/drawable/notification_bg_low.xml
+SHA1-Digest: oM5KOZhK9vWuRRtBO5tJ2QN4Vdk=
+
+Name: res/drawable/notification_icon_background.xml
+SHA1-Digest: +5UKjyzi/Wa85YDk4kFxboHOErc=
+
+Name: res/drawable/notification_tile_bg.xml
+SHA1-Digest: A3+54qvE/0ErxRv/VBCMtDSF3Bw=
+
+Name: res/layout-v17/activity_main.xml
+SHA1-Digest: t1g/OT2YNPNAze9e0fZeh7O0P1M=
+
+Name: res/layout-v17/notification_action.xml
+SHA1-Digest: mOwaQbvUsWAKkw/h9ikpf+wzXxo=
+
+Name: res/layout-v17/notification_action_tombstone.xml
+SHA1-Digest: o/Z0YI/onJ2kQrTwE7SjtZdcHAw=
+
+Name: res/layout-v17/notification_template_custom_big.xml
+SHA1-Digest: NoLMYGngORCY4r40rAvCmAXWRDU=
+
+Name: res/layout-v21/notification_action.xml
+SHA1-Digest: 2xhqRQKBKls2v/5iYCTzljLmN4Q=
+
+Name: res/layout-v21/notification_action_tombstone.xml
+SHA1-Digest: hqE99fwFCOTRDrvezYMrcWiMaUw=
+
+Name: res/layout-v21/notification_template_custom_big.xml
+SHA1-Digest: VoW5GpNXYvCJ2to/ZWacUKjlrvw=
+
+Name: res/layout-v21/notification_template_icon_group.xml
+SHA1-Digest: RmtVVLiSlvo+nPBxZ/cIvPFrrFI=
+
+Name: res/layout/activity_main.xml
+SHA1-Digest: kIpOudJsDw3WbLfKhe38UfjEv5g=
+
+Name: res/layout/notification_action.xml
+SHA1-Digest: iN39l2mWnaiIs+UXzzXpIrmrpnc=
+
+Name: res/layout/notification_action_tombstone.xml
+SHA1-Digest: +Q4WOU+3tmvmiRFGZyKNbZJzxG4=
+
+Name: res/layout/notification_template_custom_big.xml
+SHA1-Digest: bOpAuBlRcSPpFeJ/lUS45tpOTVY=
+
+Name: res/layout/notification_template_icon_group.xml
+SHA1-Digest: XYteMCMngF+ShSkP727m9la46wc=
+
+Name: res/layout/notification_template_part_chronometer.xml
+SHA1-Digest: q2lXN2k9WzVmXzyqs6ufHeoM/oc=
+
+Name: res/layout/notification_template_part_time.xml
+SHA1-Digest: IryJbIXdthYokcRWkg2ejIyzGxY=
+
+Name: res/mipmap-anydpi-v26/ic_launcher.xml
+SHA1-Digest: DCDeAiorJd5V4GCOEWj/XuJY32M=
+
+Name: res/mipmap-anydpi-v26/ic_launcher_round.xml
+SHA1-Digest: yPxg7ATWmoaze5zfMrBLEzUi+no=
+
+Name: res/mipmap-hdpi/ic_launcher.png
+SHA1-Digest: UMjOgZ0rUnYoyOo6dPADgM1xN4I=
+
+Name: res/mipmap-hdpi/ic_launcher_foreground.png
+SHA1-Digest: n1b2LVnvOAGmXzqsoTHz04gKxlE=
+
+Name: res/mipmap-hdpi/ic_launcher_round.png
+SHA1-Digest: sksu9n47CCZfy7lLNKbCK+qe/YQ=
+
+Name: res/mipmap-mdpi/ic_launcher.png
+SHA1-Digest: nX9mJzdwkfCxOyyIVE29OgLm6xs=
+
+Name: res/mipmap-mdpi/ic_launcher_foreground.png
+SHA1-Digest: KO0fT/9uMZXxYKHjZu5A0XeeBd0=
+
+Name: res/mipmap-mdpi/ic_launcher_round.png
+SHA1-Digest: 8vRF9z85d7FnVeYROSZU3px5D1w=
+
+Name: res/mipmap-xhdpi/ic_launcher.png
+SHA1-Digest: ZZ+RTucS/OibRyGeWMDf3bZEoPY=
+
+Name: res/mipmap-xhdpi/ic_launcher_foreground.png
+SHA1-Digest: L2IN4iIxNix7aP0O4LuoJwGCjt4=
+
+Name: res/mipmap-xhdpi/ic_launcher_round.png
+SHA1-Digest: l7q7p8WGv9/Mxv1Nw3DSILq+AeA=
+
+Name: res/mipmap-xxhdpi/ic_launcher.png
+SHA1-Digest: CGXKAjBas+QNpZgk/+j5QdklIe8=
+
+Name: res/mipmap-xxhdpi/ic_launcher_foreground.png
+SHA1-Digest: /YJVORdvsbBYI/rKq6LGjwHTbCc=
+
+Name: res/mipmap-xxhdpi/ic_launcher_round.png
+SHA1-Digest: 8UVz0jAWkdQA3xniQT3I5Af1Y40=
+
+Name: res/mipmap-xxxhdpi/ic_launcher.png
+SHA1-Digest: LwNLup8KgTtV9cik3DTVBNLl2es=
+
+Name: res/mipmap-xxxhdpi/ic_launcher_foreground.png
+SHA1-Digest: e4IEzdRLIzgeOsk7Tj+mIO+WSaA=
+
+Name: res/mipmap-xxxhdpi/ic_launcher_round.png
+SHA1-Digest: DCQLXCWA6DKMDXmPQeVNwUGpwso=
+
+Name: res/xml/device_admin.xml
+SHA1-Digest: iEyPdAghXLjM2H+OXyP4H7TWxDs=
+
+Name: resources.arsc
+SHA1-Digest: yVhsD3eSgkKDSMQZy09HZtGaRMY=
+

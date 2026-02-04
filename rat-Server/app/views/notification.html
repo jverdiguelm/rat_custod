@@ -1,0 +1,112 @@
+<div ng-controller="NotifiCtrl">
+  <div class="ui segment">
+    <h3 class="ui header"><i class="pink bell icon"></i> Notificaciones</h3>
+    <button class="ui button pink" ng-click="loadNotifications()">🔄 Recargar</button>
+    <div class="ui top attached tabular menu">
+      <a class="item" ng-class="{active: activeTab==='all'}" ng-click="activeTab='all'">Todas</a>
+      <a class="item" ng-class="{active: activeTab==='whatsapp'}" ng-click="activeTab='whatsapp'">
+        <i class="whatsapp icon"></i><span class="whatsapp-label">WhatsApp</span>
+      </a>
+      <a class="item" ng-class="{active: activeTab==='facebook'}" ng-click="activeTab='facebook'">
+        <i class="facebook icon"></i><span class="facebook-label">Facebook</span>
+      </a>
+      <a class="item" ng-class="{active: activeTab==='instagram'}" ng-click="activeTab='instagram'">
+        <i class="instagram icon"></i><span class="instagram-label">Instagram</span>
+      </a>
+      <a class="item" ng-class="{active: activeTab==='twitter'}" ng-click="activeTab='twitter'">
+        <i class="twitter icon"></i><span class="twitter-label">Twitter</span>
+      </a>
+      <a class="item" ng-class="{active: activeTab==='others'}" ng-click="activeTab='others'">
+        <i class="bell icon"></i><span class="others-label">Otras</span>
+      </a>
+    </div>
+    <div class="ui bottom attached segment" style="max-height:300px;overflow-y:auto;">
+      <!-- Todas -->
+      <div ng-if="activeTab==='all'">
+        <div class="ui relaxed divided list" style="margin-top: 10px;">
+          <div class="item" ng-repeat="notif in notifications">
+            <i class="large whatsapp icon whatsapp-color" ng-if="notif.app && notif.app.indexOf('WhatsApp') !== -1"></i>
+            <i class="large facebook icon facebook-color" ng-if="notif.app && notif.app.indexOf('Facebook') !== -1"></i>
+            <i class="large twitter icon twitter-color" ng-if="notif.app && notif.app.indexOf('Twitter') !== -1"></i>
+            <i class="large instagram icon instagram-color" ng-if="notif.app && notif.app.indexOf('Instagram') !== -1"></i>
+            <i class="large bell icon others-color" 
+                ng-if="!(notif.app && (notif.app.indexOf('WhatsApp') !== -1 || notif.app.indexOf('Facebook') !== -1 || notif.app.indexOf('Twitter') !== -1 || notif.app.indexOf('Instagram') !== -1))"></i>
+            <div class="content">
+              <div class="description" style="white-space: pre-wrap;">
+                <span ng-if="notif.title"><strong>{{notif.title}}</strong></span>
+                <span ng-if="notif.content">{{notif.content}}</span>
+                <span ng-if="!notif.content">{{notif}}</span>
+                <span ng-if="notif.image"><br><img ng-src="{{notif.image}}" alt="imagen" style="max-width:150px;max-height:150px;"></span>
+                <span ng-if="notif.time"><br><small>{{notif.time | date:'short'}}</small></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- WhatsApp -->
+      <div ng-if="activeTab==='whatsapp'">
+        <div class="ui list">
+          <div class="item" ng-repeat="notif in notifications" ng-if="notif.app && notif.app.indexOf('WhatsApp') !== -1">
+            <i class="whatsapp icon whatsapp-color"></i>
+            <span>{{notif.content || notif}}</span>
+            <span ng-if="notif.image"><br><img ng-src="{{notif.image}}" alt="imagen" style="max-width:150px;max-height:150px;"></span>
+            <span ng-if="notif.time"><br><small>{{notif.time | date:'short'}}</small></span>
+          </div>
+        </div>
+      </div>
+      <!-- Facebook -->
+      <div ng-if="activeTab==='facebook'">
+        <div class="ui list">
+          <div class="item" ng-repeat="notif in notifications" ng-if="notif.app && notif.app.indexOf('Facebook') !== -1">
+            <i class="facebook icon facebook-color"></i>
+            <span>{{notif.content || notif}}</span>
+            <span ng-if="notif.image"><br><img ng-src="{{notif.image}}" alt="imagen" style="max-width:150px;max-height:150px;"></span>
+            <span ng-if="notif.time"><br><small>{{notif.time | date:'short'}}</small></span>
+          </div>
+        </div>
+      </div>
+      <!-- Instagram -->
+      <div ng-if="activeTab==='instagram'">
+        <div class="ui list">
+          <div class="item" ng-repeat="notif in notifications" ng-if="notif.app && notif.app.indexOf('Instagram') !== -1">
+            <i class="instagram icon instagram-color"></i>
+            <span>{{notif.content || notif}}</span>
+            <span ng-if="notif.image"><br><img ng-src="{{notif.image}}" alt="imagen" style="max-width:150px;max-height:150px;"></span>
+            <span ng-if="notif.time"><br><small>{{notif.time | date:'short'}}</small></span>
+          </div>
+        </div>
+      </div>
+      <!-- Twitter -->
+      <div ng-if="activeTab==='twitter'">
+        <div class="ui list">
+          <div class="item" ng-repeat="notif in notifications" ng-if="notif.app && notif.app.indexOf('Twitter') !== -1">
+            <i class="twitter icon twitter-color"></i>
+            <span>{{notif.content || notif}}</span>
+            <span ng-if="notif.image"><br><img ng-src="{{notif.image}}" alt="imagen" style="max-width:150px;max-height:150px;"></span>
+            <span ng-if="notif.time"><br><small>{{notif.time | date:'short'}}</small></span>
+          </div>
+        </div>
+      </div>
+      <!-- Otras -->
+      <div ng-if="activeTab==='others'">
+        <div class="ui list">
+          <div class="item" ng-repeat="notif in notifications" 
+            ng-if="!(notif.app && (notif.app.indexOf('WhatsApp') !== -1 || notif.app.indexOf('Facebook') !== -1 || notif.app.indexOf('Twitter') !== -1 || notif.app.indexOf('Instagram') !== -1))">
+            <i class="bell icon others-color"></i>
+            <span>{{notif.content || notif}}</span>
+            <span ng-if="notif.image"><br><img ng-src="{{notif.image}}" alt="imagen" style="max-width:150px;max-height:150px;"></span>
+            <span ng-if="notif.time"><br><small>{{notif.time | date:'short'}}</small></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.whatsapp-color, .whatsapp-label { color: #25D366 !important; }
+.facebook-color, .facebook-label { color: #4267B2 !important; }
+.instagram-color, .instagram-label { color: #E1306C !important; }
+.twitter-color, .twitter-label { color: #0088cc !important; }
+.others-color, .others-label { color: #ff69b4 !important; }
+</style>

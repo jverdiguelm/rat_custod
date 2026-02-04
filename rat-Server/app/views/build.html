@@ -1,0 +1,103 @@
+<!-- app/views/build.html -->
+<div ng-controller="BuildCtrl" class="ui container" style="padding: 1em;">
+
+  <h3 class="ui dividing header">APK Builder</h3>
+
+  <form class="ui form">
+    <!-- Directorio del proyecto -->
+    <div class="field">
+      <label>Directorio del proyecto</label>
+      <input type="text" ng-model="build.projectDir" placeholder="/Users/jesusverdiguel/AhMyth/Ahmyth-Client">
+      <small>Carpeta donde está tu proyecto de cliente AhMyth</small>
+    </div>
+
+    <!-- Nombre de salida -->
+    <div class="field">
+      <label>Nombre de salida</label>
+      <input type="text" ng-model="build.outputName" placeholder="MythApp">
+      <small>Nombre final de tu APK (sin extensión)</small>
+    </div>
+
+    <!-- Keystore y alias -->
+    <div class="two fields">
+      <div class="field">
+        <label>Keystore (.jks)</label>
+        <input type="text" ng-model="build.keystorePath" placeholder="/ruta/a/tuKeystore.jks">
+        <small>Archivo Java KeyStore para firmar el APK</small>
+      </div>
+      <div class="field">
+        <label>Alias de la clave</label>
+        <input type="text" ng-model="build.keyAlias" placeholder="miAlias">
+        <small>Nombre del par de claves dentro del keystore</small>
+      </div>
+    </div>
+
+    <!-- Contraseñas -->
+    <div class="two fields">
+      <div class="field">
+        <label>Contraseña del Keystore</label>
+        <input type="password" ng-model="build.keystorePassword" placeholder="••••••">
+      </div>
+      <div class="field">
+        <label>Contraseña de la clave</label>
+        <input type="password" ng-model="build.keyPassword" placeholder="••••••">
+      </div>
+    </div>
+
+    <!-- Servidor -->
+    <div class="two fields">
+      <div class="field">
+        <label>Servidor IP</label>
+        <input type="text" ng-model="build.serverIp" placeholder="192.168.1.100">
+      </div>
+      <div class="field">
+        <label>Servidor Puerto</label>
+        <input type="text" ng-model="build.serverPort" placeholder="42474">
+      </div>
+    </div>
+
+    <!-- Permisos: casillas de verificación -->
+    <div class="field">
+      <label>Permisos</label>
+      <div class="ui list">
+        <div class="item" ng-repeat="(key, enabled) in build.perms">
+          <label>
+            <input type="checkbox" ng-model="build.perms[key]" /> {{key}}
+          </label>
+        </div>
+      </div>
+      <small>Marca los permisos que quieras incluir en el APK</small>
+    </div>
+
+    <!-- Botón de construcción -->
+    <button class="ui primary button" ng-click="startBuild()" ng-disabled="building">
+      <i class="cogs icon"></i> Construir APK
+    </button>
+  </form>
+
+  <!-- Indicador de progreso -->
+  <div class="ui segment" ng-show="building" style="margin-top: 1em;">
+    <div class="ui active inline loader"></div> Construyendo...
+  </div>
+
+  <!-- Logs de build -->
+  <div id="apkLog" class="ui segment" style="height:200px; overflow:auto; margin-top:1em;" ng-show="apkLogs.length">
+    <div ng-repeat="line in apkLogs track by $index">{{line}}</div>
+  </div>
+
+  <!-- Enlace al APK generado -->
+  <div class="ui positive message" ng-show="apkLink" style="margin-top:1em;">
+    <i class="download icon"></i>
+    APK listo: <a ng-href="{{apkLink}}" target="_blank">{{apkLink}}</a>
+     <a ng-href="{{ apkLink }}"
+     download="{{ build.outputName }}.apk"
+     target="_blank">
+     Descargar APK
+    </a>
+  </div>
+</div>
+
+<!-- Inicializar Semantic UI checkbox -->
+<script>
+  $('.ui.checkbox').checkbox();
+</script>

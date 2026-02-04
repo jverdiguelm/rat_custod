@@ -1,0 +1,74 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    compileSdk 30
+
+    defaultConfig {
+        applicationId "ahmyth.mine.king.ahmyth"
+        minSdk 21
+        targetSdk 30
+        versionCode 1
+        versionName "1.0"
+    }
+
+    // ── Habilita desugaring de Java 8 ─────────────────────────────────────────
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    // ────────────────────────────────────────────────────────────────────────
+
+    signingConfigs {
+        release {
+            // Alias y contraseña que definiste al generar el JKS
+            keyAlias 'myalias'
+            keyPassword '3118Gd1818@'
+
+            // Ruta absoluta al JKS que ya tienes
+            storeFile file('/Users/jesusverdiguel/my-release-key.jks')
+            storePassword '3118Gd1818@'
+            // Si tu archivo es PKCS12, descomenta la línea:
+            storeType 'pkcs12'
+            // Si lo regeneras forzando -storetype JKS, coméntala o pon 'JKS'
+            storeType 'JKS'
+        }
+    }
+
+    buildTypes {
+        release {
+            // Le decimos que firme con nuestro JKS
+            signingConfig signingConfigs.release
+
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
+                          'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.3.1'
+    implementation 'androidx.core:core-ktx:1.6.0'
+
+    // Excluimos org.json de socket.io-client para evitar conflictos
+    implementation('io.socket:socket.io-client:2.0.1') {
+        exclude group: 'org.json', module: 'json'
+    }
+
+    implementation 'com.google.android.material:material:1.4.0'
+}
+
+// ─── Copia cualquier APK de release a ../Output/app.apk ────────────────────
+task copyReleaseApk(type: Copy) {
+    description = "Copia el APK de release (signed) al ../Output/app.apk"
+    from("$buildDir/outputs/apk/release") {
+        include "*release*.apk"
+    }
+    into("$rootDir/../Output")
+    rename { "app.apk" }
+}
+tasks.matching { it.name == "assembleRelease" }.all {
+    finalizedBy copyReleaseApk
+}

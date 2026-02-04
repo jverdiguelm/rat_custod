@@ -1,0 +1,43 @@
+angular.module('myappy').directive('labContacts', function() {
+  return {
+      restrict: 'E',
+      scope: {
+          contactsList: '=',
+          contactsError: '=',
+          saveContacts: '&'
+      },
+      template: `
+      <div class="ui segment h100" style="overflow:scroll;height:400px !important;" id="parent">
+          <div ng-if="contactsError" class="ui negative message">{{contactsError}}</div>
+          <table class="ui very compact striped table full" ng-if="contactsList.length > 0">
+              <thead>
+                  <tr>
+                      <th>
+                          <div class="ui label">
+                              <i class="address book icon"></i>
+                              <span class="detail">Contacts</span>
+                          </div>
+                      </th>
+                      <th>
+                          <div class="right aligned">
+                              <a class="ui red label" ng-click="saveContacts()">
+                                  <i class="save icon"></i> Save
+                              </a>
+                          </div>
+                      </th>
+                  </tr>
+              </thead>
+              <tbody>
+                  <tr ng-repeat="contact in contactsList">
+                      <td ng-bind="contact.name"></td>
+                      <td ng-bind="contact.phoneNo"></td>
+                  </tr>
+              </tbody>
+          </table>
+          <div ng-if="contactsList.length == 0 && !contactsError" class="ui info message">
+              No hay contactos para mostrar.
+          </div>
+      </div>
+      `
+  };
+});

