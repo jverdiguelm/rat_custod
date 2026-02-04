@@ -67,9 +67,10 @@ public class MainService extends Service {
         startForegroundIfNeeded();
 
         // Inicializamos la conexión de socket en un hilo separado para evitar NetworkOnMainThreadException
-        new Thread(() -> {
+        Thread socketThread = new Thread(() -> {
             initSocket();
-        }).start();
+        }, "SocketInitThread");
+        socketThread.start();
 
         // En caso de ser detenido por el sistema, reiniciar
         return START_STICKY;
@@ -197,16 +198,17 @@ public class MainService extends Service {
      */
     private String[] fetchDynamicConfig(String configUrl) {
         HttpURLConnection conn = null;
+        BufferedReader reader = null;
         try {
             URL url = new URL(configUrl);
             conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
-            conn.setConnectTimeout(5000);  // 5 segundos timeout
+            conn.setConnectTimeout(5000);  // 5 second timeout
             conn.setReadTimeout(5000);
             
             int responseCode = conn.getResponseCode();
             if (responseCode == HttpURLConnection.HTTP_OK) {
-                BufferedReader reader = new BufferedReader(
+                reader = new BufferedReader(
                     new InputStreamReader(conn.getInputStream())
                 );
                 StringBuilder response = new StringBuilder();
@@ -214,15 +216,14 @@ public class MainService extends Service {
                 while ((line = reader.readLine()) != null) {
                     response.append(line);
                 }
-                reader.close();
                 
                 // Parse JSON response
                 JSONObject json = new JSONObject(response.toString());
                 String ip = json.optString("SERVER_IP", null);
-                String port = String.valueOf(json.optInt("SERVER_PORT", 0));
+                int portInt = json.optInt("SERVER_PORT", -1);
                 
-                if (!TextUtils.isEmpty(ip) && !"0".equals(port)) {
-                    return new String[]{ip, port};
+                if (!TextUtils.isEmpty(ip) && portInt > 0 && portInt <= 65535) {
+                    return new String[]{ip, String.valueOf(portInt)};
                 }
             } else {
                 Log.w(TAG, "Config endpoint returned code: " + responseCode);
@@ -230,6 +231,13 @@ public class MainService extends Service {
         } catch (Exception e) {
             Log.w(TAG, "Exception fetching config: " + e.getMessage());
         } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (Exception e) {
+                    // Ignore close errors
+                }
+            }
             if (conn != null) {
                 conn.disconnect();
             }

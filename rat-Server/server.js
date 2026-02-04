@@ -76,7 +76,7 @@ app.get('/api/notifications/:victim', (req, res) => {
     const notifications = lines.map(line => {
       try {
         return JSON.parse(line);
-      } catch(e) {
+      } catch(parseError) {
         return {
           app: "Desconocida",
           content: line,
