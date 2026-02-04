@@ -88,7 +88,16 @@ Before building the Android client, ensure you have:
    ```
 
 3. Build the release APK:
+   
+   **Option A: Using the build script (Recommended)**
    ```bash
+   ./build-apk.sh
+   ```
+   This script automatically detects and uses JDK 11.
+   
+   **Option B: Manual build with Gradle**
+   ```bash
+   export JAVA_HOME=/path/to/jdk-11
    ./gradlew assembleRelease
    ```
 
