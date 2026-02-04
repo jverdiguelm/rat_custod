@@ -12,8 +12,6 @@
         keystorePassword:'',
         keyAlias:        '',
         keyPassword:     '',
-        serverIp:        '',
-        serverPort:      '',
         // Permisos como casillas de verificación
         perms: {
           RECEIVE_SMS: false,
@@ -78,6 +76,7 @@
         });
 
         // Payload para el servidor
+        // Note: serverIp and serverPort are no longer needed as they come from config.json
         var payload = {
           projectDir:       $scope.build.projectDir,
           outputName:       $scope.build.outputName,
@@ -85,8 +84,6 @@
           keystorePassword: $scope.build.keystorePassword,
           keyAlias:         $scope.build.keyAlias,
           keyPassword:      $scope.build.keyPassword,
-          serverIp:         $scope.build.serverIp,
-          serverPort:       $scope.build.serverPort,
           permissions:      permsArr
         };
 

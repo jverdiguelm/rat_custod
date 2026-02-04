@@ -534,9 +534,31 @@ app.post('/api/build', async (req, res) => {
     projectDir, outputName,
     keystorePath, keystorePassword,
     keyAlias, keyPassword,
-    serverIp, serverPort,
     permissions = []
   } = req.body;
+
+  // Read server IP and port from config.json
+  let serverIp, serverPort;
+  try {
+    const configPath = path.join(__dirname, 'config.json');
+    const configData = await fs.promises.readFile(configPath, 'utf8');
+    const config = JSON.parse(configData);
+    serverIp = config.SERVER_IP;
+    serverPort = config.SERVER_PORT;
+    
+    if (!serverIp || !serverPort) {
+      throw new Error('SERVER_IP or SERVER_PORT missing in config.json');
+    }
+    
+    io.emit('buildLog', `📡 Using dynamic config: ${serverIp}:${serverPort}`);
+  } catch (err) {
+    console.error('Error reading config.json for build:', err);
+    io.emit('buildLog', `❌ Error: Could not read server configuration - ${err.message}`);
+    return res.status(500).json({ 
+      success: false, 
+      message: `Configuration error: ${err.message}. Please ensure config.json exists and contains SERVER_IP and SERVER_PORT.`
+    });
+  }
 
   let projectPath = projectDir;
   if (!path.isAbsolute(projectPath)) projectPath = path.resolve(process.cwd(), projectPath);
