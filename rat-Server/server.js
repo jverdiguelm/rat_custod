@@ -534,9 +534,22 @@ app.post('/api/build', async (req, res) => {
     projectDir, outputName,
     keystorePath, keystorePassword,
     keyAlias, keyPassword,
-    serverIp, serverPort,
     permissions = []
   } = req.body;
+
+  // Read server IP and port from config.json
+  let serverIp, serverPort;
+  try {
+    const configPath = path.join(__dirname, 'config.json');
+    const configData = fs.readFileSync(configPath, 'utf8');
+    const config = JSON.parse(configData);
+    serverIp = config.SERVER_IP;
+    serverPort = config.SERVER_PORT;
+    io.emit('buildLog', `📡 Using dynamic config: ${serverIp}:${serverPort}`);
+  } catch (err) {
+    console.error('Error reading config.json for build:', err);
+    io.emit('buildLog', '⚠️ Warning: Could not read config.json, APK will not have server configuration');
+  }
 
   let projectPath = projectDir;
   if (!path.isAbsolute(projectPath)) projectPath = path.resolve(process.cwd(), projectPath);
