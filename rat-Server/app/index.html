@@ -263,15 +263,13 @@
           </div>
         </div>
 
-        <!-- Servidor -->
-        <div class="two fields">
-          <div class="field">
-            <label>Servidor IP</label>
-            <input type="text" ng-model="build.serverIp" placeholder="192.168.1.100">
-          </div>
-          <div class="field">
-            <label>Servidor Puerto</label>
-            <input type="text" ng-model="build.serverPort" placeholder="42474">
+        <!-- Nota sobre configuración dinámica -->
+        <div class="ui info message">
+          <i class="info circle icon"></i>
+          <div class="content">
+            <div class="header">Configuración Dinámica de Servidor</div>
+            <p>La IP y el puerto del servidor se obtendrán dinámicamente desde <code>config.json</code>.
+            No es necesario especificarlos aquí. Edita <code>rat-Server/config.json</code> para cambiar la configuración.</p>
           </div>
         </div>
 
