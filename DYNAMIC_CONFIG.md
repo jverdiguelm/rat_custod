@@ -8,10 +8,21 @@ The rat_custod application now supports **dynamic server configuration**, allowi
 
 ### Configuration Flow
 
-1. **Client Startup**: When the MainService starts, it first reads the fallback configuration from AndroidManifest.xml meta-data
-2. **Config Fetch**: The client attempts to fetch dynamic configuration from `http://<SERVER_IP>:3000/api/config`
-3. **Connection**: If the fetch succeeds, the client uses the dynamic values; otherwise, it falls back to manifest values
-4. **Socket Connection**: The client establishes a Socket.IO connection to the retrieved server IP and port
+1. **Server Setup**: The main server runs on port 3000 (configurable via PORT environment variable)
+2. **Victim Listener Setup**: A separate listener must be started on SERVER_PORT (e.g., 8000) via the web UI or `/api/listen` API
+3. **Client Startup**: When the MainService starts, it first reads the fallback configuration from AndroidManifest.xml meta-data
+4. **Config Fetch**: The client attempts to fetch dynamic configuration from `http://<SERVER_IP>:3000/api/config`
+5. **Connection**: If the fetch succeeds, the client uses the dynamic values; otherwise, it falls back to manifest values
+6. **Socket Connection**: The client establishes a Socket.IO connection to `http://<SERVER_IP>:<SERVER_PORT>` (the victim listener)
+
+### Port Architecture
+
+The system uses **two different ports**:
+
+- **Main Server Port (3000)**: Hosts the web UI, API endpoints, and `/api/config` endpoint
+- **Victim Listener Port (8000)**: Dedicated Socket.IO server for Android client connections (must be started separately)
+
+See [PORT_CONFIGURATION.md](PORT_CONFIGURATION.md) for comprehensive port setup details.
 
 ### Fallback Mechanism
 
@@ -172,12 +183,22 @@ I/AhMyth: Connecting to 192.168.1.68:8000
 
 **Symptoms**: Config fetches successfully but socket connection fails
 **Causes**:
-- PORT value in config.json doesn't match victim listener port
+- SERVER_PORT value in config.json doesn't match victim listener port
 - Victim listener not started on server
+- Firewall blocking SERVER_PORT
 
 **Solution**:
-- Verify victim listener is running on the specified port
-- Check that SERVER_PORT in config matches the port used in `/api/start` endpoint
+- **Start the victim listener**:
+  ```bash
+  curl -X POST http://localhost:3000/api/listen \
+    -H "Content-Type: application/json" \
+    -d '{"port": 8000}'
+  ```
+- Verify victim listener is running on the specified port: `lsof -i :8000` (Linux/macOS) or `netstat -an | findstr :8000` (Windows)
+- Check that SERVER_PORT in config.json matches the port used in `/api/listen` endpoint
+- Verify firewall allows the victim listener port
+
+For comprehensive troubleshooting, see [PORT_CONFIGURATION.md](PORT_CONFIGURATION.md)
 
 ## Security Considerations
 
