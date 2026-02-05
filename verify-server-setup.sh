@@ -2,6 +2,14 @@
 
 # Server Setup Verification Script
 # This script helps verify that the rat-Server is properly configured and accessible
+#
+# USAGE: Run this script from the repository root directory:
+#   ./verify-server-setup.sh
+#
+# REQUIREMENTS:
+#   - Must be run from the rat_custod repository root
+#   - Server dependencies should be installed (npm install in rat-Server/)
+#   - Node.js must be available on the system
 
 # Note: Using set -e but with explicit error handling for optional checks
 set -e
@@ -17,6 +25,17 @@ echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}RAT Server Configuration Verification${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
+
+# Verify we're in the repository root
+if [ ! -d "rat-Server" ]; then
+    echo -e "${RED}Error: rat-Server directory not found!${NC}"
+    echo "This script must be run from the repository root directory."
+    echo ""
+    echo "Usage:"
+    echo "  cd /path/to/rat_custod"
+    echo "  ./verify-server-setup.sh"
+    exit 1
+fi
 
 # Check if config.json exists
 echo -e "${YELLOW}[1/7] Checking config.json...${NC}"
