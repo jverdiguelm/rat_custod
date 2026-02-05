@@ -120,7 +120,7 @@ lsof -i :8000
 
 ### config.json
 
-**Location**: `/home/runner/work/rat_custod/rat_custod/rat-Server/config.json`
+**Location**: `rat-Server/config.json`
 
 **Purpose**: Defines the default IP and port that Android clients should connect to
 

