@@ -45,6 +45,22 @@ RAT Custod is a remote administration tool consisting of an Android client and a
 
    The server will start on port 3000 (configurable via PORT environment variable)
 
+5. **IMPORTANT**: Start a victim listener for Android client connections:
+   - Open the web UI at http://localhost:3000
+   - Navigate to "Victims Lab"
+   - Start a listener on port 8000 (or your configured SERVER_PORT)
+   - Or use the API:
+     ```bash
+     curl -X POST http://localhost:3000/api/listen \
+       -H "Content-Type: application/json" \
+       -d '{"port": 8000}'
+     ```
+
+**Understanding the Port Architecture**:
+- **Port 3000**: Main server (web UI, API endpoints, configuration)
+- **Port 8000** (or configured): Victim listener for Android clients
+- See [PORT_CONFIGURATION.md](PORT_CONFIGURATION.md) for detailed port setup and troubleshooting
+
 ### Client Setup
 
 #### Prerequisites for Building
@@ -193,6 +209,13 @@ To build a custom APK with specific server configuration:
 }
 ```
 
+**Important Notes**:
+- `SERVER_IP`: The IP address where your server is accessible to Android devices
+- `SERVER_PORT`: The port where the victim listener runs (must be started separately)
+- The main server always runs on port 3000 (or via PORT environment variable)
+- The victim listener must be started manually via the web UI or `/api/listen` endpoint
+- See [PORT_CONFIGURATION.md](PORT_CONFIGURATION.md) for complete port setup details
+
 ### Client Configuration (Fallback)
 
 **File**: `rat-Client/app/src/main/AndroidManifest.xml`
@@ -271,10 +294,21 @@ rat_custod/
 
 ### Client can't connect to server
 
-1. Verify server is running: `curl http://<SERVER_IP>:3000/api/config`
-2. Check network connectivity between client and server
-3. Verify firewall allows ports 3000 and configured SERVER_PORT
-4. Check Android logs: `adb logcat | grep AhMyth`
+1. Verify main server is running: `curl http://<SERVER_IP>:3000/api/config`
+2. **Verify victim listener is started**: Must be started via web UI or API (see below)
+3. Check that SERVER_PORT in config.json matches the started listener port
+4. Verify network connectivity between client and server
+5. Verify firewall allows ports 3000 and configured SERVER_PORT (e.g., 8000)
+6. Check Android logs: `adb logcat | grep AhMyth`
+
+**Starting the victim listener**:
+```bash
+curl -X POST http://localhost:3000/api/listen \
+  -H "Content-Type: application/json" \
+  -d '{"port": 8000}'
+```
+
+For detailed troubleshooting, see [PORT_CONFIGURATION.md](PORT_CONFIGURATION.md)
 
 ### Config endpoint not responding
 
