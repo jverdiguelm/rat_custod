@@ -1,0 +1,1 @@
+This pull request introduces dynamic permission requests for camera and microphone. It also addresses runtime compatibility issues with Android's permission system. Detailed changes will follow.
