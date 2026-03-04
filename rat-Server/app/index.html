@@ -363,17 +363,17 @@
 
   <script>
     // Retrieve stored CSRF token and make it available for API calls
-    let _csrfToken = sessionStorage.getItem('csrfToken');
-    if (!_csrfToken) {
+    let csrfToken = sessionStorage.getItem('csrfToken');
+    if (!csrfToken) {
       // Fetch from server if not in sessionStorage (e.g. after page refresh)
       fetch('/api/csrf-token', { credentials: 'same-origin' })
-        .then(r => r.ok ? r.json() : Promise.reject())
-        .then(data => { _csrfToken = data.csrfToken; sessionStorage.setItem('csrfToken', _csrfToken); })
-        .catch(() => {});
+        .then(r => r.ok ? r.json() : Promise.reject(new Error('Failed to fetch CSRF token')))
+        .then(data => { csrfToken = data.csrfToken; sessionStorage.setItem('csrfToken', csrfToken); })
+        .catch((err) => { console.error('Could not obtain CSRF token:', err); window.location.href = '/login'; });
     }
 
     function getCsrfHeaders() {
-      return _csrfToken ? { 'X-CSRF-Token': _csrfToken } : {};
+      return csrfToken ? { 'X-CSRF-Token': csrfToken } : {};
     }
 
     // Fetch current user and display username

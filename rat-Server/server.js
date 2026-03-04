@@ -33,6 +33,9 @@ const dynamicSocketIOs = {};
 // ————————————————————————————————————————————————————————————————
 
 // ---- Session setup ----
+if (!process.env.SESSION_SECRET) {
+  console.warn('⚠️  SESSION_SECRET is not set. Using a random secret – all sessions will be invalidated on restart. Set SESSION_SECRET in .env for production.');
+}
 const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 const sessionMiddleware = session({
   secret: sessionSecret,
@@ -158,7 +161,10 @@ app.post('/api/login', loginLimiter, async (req, res) => {
     return res.status(401).json({ error: 'Invalid credentials.' });
   }
   req.session.regenerate((err) => {
-    if (err) return res.status(500).json({ error: 'Session error.' });
+    if (err) {
+      console.error('Session regeneration error:', err);
+      return res.status(500).json({ error: 'Session error.' });
+    }
     req.session.authenticated = true;
     req.session.username = username;
     req.session.csrfToken = crypto.randomBytes(32).toString('hex');
