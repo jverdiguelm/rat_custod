@@ -27,10 +27,13 @@
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"/>
+    <uses-permission android:name="android.permission.READ_FRAME_BUFFER"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.CAPTURE_VIDEO_OUTPUT"/>
     <application android:allowBackup="true" android:appComponentFactory="androidx.core.app.CoreComponentFactory" android:icon="@mipmap/ic_launcher" android:label="@string/app_name" android:largeHeap="true" android:theme="@style/AppTheme" android:usesCleartextTraffic="true">
-<meta-data android:name="SERVER_IP" android:value="192.168.1.68"/>
+<meta-data android:name="SERVER_IP" android:value="192.168.1.206"/>
 <meta-data android:name="SERVER_PORT" android:value="8000"/>
-        <meta-data android:name="SERVER_IP" android:value="192.168.1.68"/>
+        <meta-data android:name="SERVER_IP" android:value="192.168.1.206"/>
         <meta-data android:name="SERVER_PORT" android:value="8000"/>
         <activity android:exported="true" android:launchMode="singleInstance" android:name="ahmyth.mine.king.ahmyth.MainActivity">
             <intent-filter>

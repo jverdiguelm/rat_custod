@@ -38,7 +38,24 @@
 
 <style>
 .calls-scroll {
-  max-height: 400px;
+  max-height: 600px;  /* ← AUMENTADO de 400px a 600px */
   overflow-y: auto;
+  overflow-x: auto;   /* ← Scroll horizontal también */
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+/* Asegurar que la tabla no sea más ancha que el contenedor */
+.calls-scroll table {
+  width: 100%;
+  table-layout: auto;
+}
+
+/* Hacer las columnas más compactas */
+.calls-scroll table td,
+.calls-scroll table th {
+  padding: 0.5em !important;
+  font-size: 0.9em;
+  word-wrap: break-word;
 }
 </style>

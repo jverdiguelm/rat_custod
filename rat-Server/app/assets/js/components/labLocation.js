@@ -11,21 +11,40 @@ angular.module('myappy').component('labLocation', {
 
     ctrl.$onInit = function() {
       console.log('[labLocation] $onInit');
-      $scope.$watch(
-        function() { 
-          const tab = $element.parent().scope().labTab;
-          console.log('[labLocation] Watching labTab:', tab);
-          return tab; 
-        },
-        function(tab) {
-          console.log('[labLocation] labTab changed:', tab, 'victim:', ctrl.victim);
-          if (tab === 'location' && ctrl.victim) {
+      var parentScope = $element.parent().scope();
+      
+      // ✅ Escuchar SOLO cuando la pestaña SEA location
+      var unwatch = parentScope.$watch(
+        function() { return parentScope.labTab; },
+        function(newTab, oldTab) {
+          console.log('[labLocation] labTab changed from', oldTab, 'to', newTab);
+          
+          // ✅ SOLO ejecutar si el tab ACTUAL es 'location'
+          if (newTab === 'location' && ctrl.victim) {
+            console.log('[labLocation] Tab ES location, obteniendo ubicación');
             $timeout(function() {
               ctrl.getLocation();
             }, 50);
+          } else {
+            console.log('[labLocation] Tab NO es location, ignorando');
           }
         }
       );
+      
+      // Limpiar el watch cuando se destruya el componente
+      ctrl.$onDestroy = function() {
+        console.log('[labLocation] $onDestroy - limpiando watch');
+        unwatch();
+        if (ctrl.resizeObserver) {
+          ctrl.resizeObserver.disconnect();
+          ctrl.resizeObserver = null;
+        }
+        if (ctrl.map) {
+          ctrl.map.remove();
+          ctrl.map = null;
+          ctrl.marker = null;
+        }
+      };
     };
 
     ctrl.$onChanges = function(changes) {
@@ -54,8 +73,8 @@ angular.module('myappy').component('labLocation', {
 
     ctrl.getLocation = function() {
       console.log('[labLocation] getLocation - requesting for victim:', ctrl.victim && ctrl.victim.id);
-      socket.emit('get-location', { victimId: ctrl.victim.id });
-      socket.once('location-data', function(data) {
+      window.socket.emit('get-location', { victimId: ctrl.victim.id });
+      window.socket.once('location-data', function(data) {
         console.log('[labLocation] LLEGO LOCATION DATA:', data);
         $scope.$apply(function() {
           if (data && data.lat && data.lng) {
@@ -121,19 +140,6 @@ angular.module('myappy').component('labLocation', {
       var wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Historial");
       XLSX.writeFile(wb, "historial_ubicacion.xlsx");
-    };
-
-    ctrl.$onDestroy = function() {
-      console.log('[labLocation] $onDestroy');
-      if (ctrl.resizeObserver) {
-        ctrl.resizeObserver.disconnect();
-        ctrl.resizeObserver = null;
-      }
-      if (ctrl.map) {
-        ctrl.map.remove();
-        ctrl.map = null;
-        ctrl.marker = null;
-      }
     };
   }
 });

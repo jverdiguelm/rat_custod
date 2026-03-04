@@ -4,19 +4,19 @@
 
    
 
-    <div class="field">
+    <div class="ui dropdown">
       <label>Selecciona una cámara:</label>
-      <select ng-model="selectedCam"
-              ng-options="cam.id as cam.name for cam in cameras"
-              ng-change="camChanged()">
-        <option value="" disabled>Selecciona...</option>
-      </select>
+      <select ng-model="selectedCameraId"
+        ng-options="cam.id as cam.name for cam in cameras"
+        ng-change="cameraChanged()"
+        class="ui dropdown">
+</select>
     </div>
 
     <div class="field">
       <button class="ui labeled icon black button"
               ng-click="snap()"
-              ng-disabled="!selectedCam || selectedCam === ''">
+              ng-disabled="!selectedCameraId || selectedCameraId === ''">
         <i class="photo icon"></i>
         Tomar foto
       </button>

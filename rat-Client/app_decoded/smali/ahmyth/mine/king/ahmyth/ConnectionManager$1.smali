@@ -25,7 +25,7 @@
 .method constructor <init>(Ljava/lang/reflect/Method;)V
     .locals 0
 
-    .line 53
+    .line 51
     iput-object p1, p0, Lahmyth/mine/king/ahmyth/ConnectionManager$1;->val$currentApplication:Ljava/lang/reflect/Method;
 
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
@@ -38,7 +38,7 @@
 .method public run()V
     .locals 3
 
-    .line 56
+    .line 54
     :try_start_0
     iget-object v0, p0, Lahmyth/mine/king/ahmyth/ConnectionManager$1;->val$currentApplication:Ljava/lang/reflect/Method;
 
@@ -56,7 +56,7 @@
 
     if-eqz v0, :cond_0
 
-    .line 58
+    .line 56
     invoke-static {v0}, Lahmyth/mine/king/ahmyth/ConnectionManager;->startAsync(Landroid/content/Context;)V
     :try_end_0
     .catch Ljava/lang/Exception; {:try_start_0 .. :try_end_0} :catch_0

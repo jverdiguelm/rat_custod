@@ -1,0 +1,117 @@
+<div class="screenshot-container">
+  <div class="ui segment">
+    <h3 class="ui header">
+      <i class="orange camera icon"></i>
+      <div class="content">
+        Captura de Pantalla
+        <div class="sub header">Obtén una captura en tiempo real de la pantalla del dispositivo</div>
+      </div>
+    </h3>
+  </div>
+
+  <!-- Botones de acción -->
+  <div class="ui segment" style="text-align: center; padding: 1em;">
+    <button class="ui primary button" ng-click="takeScreenshot()" ng-disabled="loading">
+      <i class="camera icon"></i>
+      {{ loading ? 'Capturando...' : 'Tomar Screenshot' }}
+    </button>
+    
+    <button class="ui button" ng-click="downloadScreenshot()" ng-disabled="!screenshot" ng-if="screenshot">
+      <i class="download icon"></i>
+      Descargar
+    </button>
+    
+    <button class="ui button" ng-click="copyToClipboard()" ng-disabled="!screenshot" ng-if="screenshot">
+      <i class="copy icon"></i>
+      Copiar al Portapapeles
+    </button>
+    
+    <button class="ui red button" ng-click="clearScreenshot()" ng-if="screenshot">
+      <i class="trash icon"></i>
+      Limpiar
+    </button>
+  </div>
+
+  <!-- Indicador de carga -->
+  <div class="ui active inline loader" ng-if="loading" style="display: block; text-align: center; margin: 2em 0;"></div>
+
+  <!-- Mensaje de error -->
+  <div class="ui error message" ng-if="error" style="display: block;">
+    <i class="close icon" ng-click="error = null"></i>
+    <div class="header">Error</div>
+    <p ng-bind="error"></p>
+  </div>
+
+  <!-- Mostrar screenshot con IMG -->
+  <div class="screenshot-display" ng-if="screenshot && !loading" style="text-align: center; margin-top: 2em; width: 100%;">
+    <div class="screenshot-wrapper">
+      <img id="screenshot-image" class="screenshot-image" ng-src="{{screenshotUrl}}" alt="Captura de pantalla">
+    </div>
+    <div style="margin-top: 1em; font-size: 0.9em; color: #666;">
+      <p>✅ Captura tomada recientemente</p>
+    </div>
+  </div>
+
+  <!-- Mensaje cuando no hay screenshot -->
+  <div ng-if="!screenshot && !loading" style="text-align: center; padding: 3em 1em; color: #999;">
+    <i class="huge camera icon" style="opacity: 0.3;"></i>
+    <p style="margin-top: 1em;">Haz clic en "Tomar Screenshot" para capturar la pantalla del dispositivo</p>
+  </div>
+</div>
+
+<style>
+.screenshot-container {
+  padding: 1em;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.screenshot-display {
+  animation: slideInUp 0.3s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.screenshot-wrapper {
+  display: block;
+  text-align: center;
+  padding: 1em 0;
+}
+
+.screenshot-image {
+  width: 100%;
+  max-width: 700px;
+  display: block;
+  margin: 0 auto;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+  transition: all 0.3s ease;
+}
+
+.screenshot-image:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  transform: scale(1.01);
+}
+
+@media (max-width: 768px) {
+  .screenshot-container {
+    padding: 0.5em;
+  }
+  
+  .screenshot-image {
+    border-radius: 4px;
+    max-width: 95%;
+  }
+}
+</style>
