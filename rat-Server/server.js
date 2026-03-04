@@ -82,6 +82,35 @@ const loginLimiter = rateLimit({
   message: { error: 'Too many login attempts. Please try again later.' }
 });
 
+// ---- General rate limiter for public pages (100 req / 15 min per IP) ----
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+// ---- CSRF protection for state-changing admin routes ----
+// Validates that the Origin or Referer header matches the server host.
+// JSON-only POST endpoints are not vulnerable to traditional form-based CSRF,
+// and the session cookie already has SameSite=strict, but this provides an
+// extra defence-in-depth layer for any future form-based mutations.
+function csrfProtect(req, res, next) {
+  if (req.method === 'GET' || req.method === 'HEAD') return next();
+  const origin = req.headers.origin || req.headers.referer;
+  if (!origin) return next(); // No origin header – same-origin non-browser clients are allowed
+  try {
+    const originHost = new URL(origin).host;
+    const serverHost = req.headers.host;
+    if (originHost !== serverHost) {
+      return res.status(403).json({ error: 'CSRF check failed.' });
+    }
+  } catch (_) {
+    return res.status(403).json({ error: 'CSRF check failed.' });
+  }
+  next();
+}
+
 app.use(cors());
 app.use(express.json());
 app.use(sessionMiddleware);
@@ -89,12 +118,12 @@ app.use(sessionMiddleware);
 const publicDir = path.join(__dirname, 'app');
 
 // ---- Public routes (no auth required) ----
-app.get('/login', (req, res) => {
+app.get('/login', generalLimiter, (req, res) => {
   if (req.session && req.session.authenticated) return res.redirect('/');
   res.sendFile(path.join(publicDir, 'login.html'));
 });
 
-app.post('/api/login', loginLimiter, async (req, res) => {
+app.post('/api/login', loginLimiter, csrfProtect, async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) {
     return res.status(400).json({ error: 'Username and password are required.' });
@@ -117,7 +146,7 @@ app.post('/api/login', loginLimiter, async (req, res) => {
   });
 });
 
-app.post('/api/logout', (req, res) => {
+app.post('/api/logout', csrfProtect, (req, res) => {
   req.session.destroy(() => {
     res.clearCookie('connect.sid');
     res.json({ ok: true });
@@ -128,8 +157,9 @@ app.get('/api/me', requireAuth, (req, res) => {
   res.json({ username: req.session.username });
 });
 
-// ---- Apply auth to all remaining routes ----
+// ---- Apply auth and CSRF protection to all remaining routes ----
 app.use(requireAuth);
+app.use(csrfProtect);
 
 app.use('/node_modules', express.static(path.join(__dirname, 'node_modules')));
 app.use('/node_modules', express.static(path.join(__dirname, 'app/node_modules')));
