@@ -1,119 +1,77 @@
 <div ng-controller="NotifiCtrl">
   <div class="ui segment">
-    <h3 class="ui header"><i class="pink bell icon"></i> Notificaciones</h3>
-    <button class="ui button pink" ng-click="loadNotifications()">🔄 Recargar</button>
-    <div class="ui top attached tabular menu">
-      <a class="item" ng-class="{active: activeTab==='all'}" ng-click="activeTab='all'">Todas</a>
-      <a class="item" ng-class="{active: activeTab==='whatsapp'}" ng-click="activeTab='whatsapp'">
-        <i class="whatsapp icon"></i><span class="whatsapp-label">WhatsApp</span>
-      </a>
-      <a class="item" ng-class="{active: activeTab==='facebook'}" ng-click="activeTab='facebook'">
-        <i class="facebook icon"></i><span class="facebook-label">Facebook</span>
-      </a>
-      <a class="item" ng-class="{active: activeTab==='instagram'}" ng-click="activeTab='instagram'">
-        <i class="instagram icon"></i><span class="instagram-label">Instagram</span>
-      </a>
-      <a class="item" ng-class="{active: activeTab==='twitter'}" ng-click="activeTab='twitter'">
-        <i class="twitter icon"></i><span class="twitter-label">Twitter</span>
-      </a>
-      <a class="item" ng-class="{active: activeTab==='others'}" ng-click="activeTab='others'">
-        <i class="bell icon"></i><span class="others-label">Otras</span>
-      </a>
+    <h3 class="ui header"><i class="pink bell outline icon"></i> Notificaciones</h3>
+
+    <div class="notifi-toolbar">
+      <div class="ui icon input notifi-search">
+        <input type="text" placeholder="Buscar por título o contenido…" ng-model="searchQuery">
+        <i class="search icon"></i>
+      </div>
+      <button class="ui small button" ng-click="loadNotifications()" style="margin-left:8px;">
+        <i class="sync alternate icon"></i> Recargar
+      </button>
+      <span class="ui label" style="margin-left:8px;" ng-if="notifications.length">
+        {{ filteredCount }} notificación(es)
+      </span>
     </div>
-    <div class="ui bottom attached segment notifications-container">
-      <!-- Todas -->
-      <div ng-if="activeTab==='all'">
-        <div class="ui relaxed divided list" style="margin-top: 10px;">
-          <div class="item" ng-repeat="notif in notifications">
-            <i class="large whatsapp icon whatsapp-color" ng-if="notif.app && notif.app.indexOf('WhatsApp') !== -1"></i>
-            <i class="large facebook icon facebook-color" ng-if="notif.app && notif.app.indexOf('Facebook') !== -1"></i>
-            <i class="large twitter icon twitter-color" ng-if="notif.app && notif.app.indexOf('Twitter') !== -1"></i>
-            <i class="large instagram icon instagram-color" ng-if="notif.app && notif.app.indexOf('Instagram') !== -1"></i>
-            <i class="large bell icon others-color" 
-                ng-if="!(notif.app && (notif.app.indexOf('WhatsApp') !== -1 || notif.app.indexOf('Facebook') !== -1 || notif.app.indexOf('Twitter') !== -1 || notif.app.indexOf('Instagram') !== -1))"></i>
+
+    <div ng-if="loading" class="ui active centered inline loader" style="margin:20px auto;display:block;"></div>
+
+    <div ng-if="!loading && filteredCount === 0" class="ui placeholder segment notifi-empty">
+      <div class="ui icon header">
+        <i class="bell outline icon"></i>
+        No hay notificaciones disponibles.
+      </div>
+    </div>
+
+    <div class="notifications-container" ng-if="!loading">
+      <div ng-repeat="group in dateGroups track by group.label" ng-if="group.notifications.length > 0">
+        <div class="notifi-date-label">
+          <span class="ui horizontal divider">
+            <i class="calendar outline icon"></i> {{ group.label }}
+          </span>
+        </div>
+        <div class="ui cards notifi-cards">
+          <div class="card notifi-card"
+               ng-repeat="notif in group.notifications track by $index"
+               ng-show="matchesSearch(notif)">
             <div class="content">
-              <div class="description" style="white-space: pre-wrap;">
-                <span ng-if="notif.title"><strong>{{notif.title}}</strong></span>
-                <span ng-if="notif.content">{{notif.content}}</span>
-                <span ng-if="!notif.content">{{notif}}</span>
-                <span ng-if="notif.image"><br><img ng-src="{{notif.image}}" alt="imagen" style="max-width:150px;max-height:150px;"></span>
-                <span ng-if="notif.time"><br><small>{{notif.time | date:'short'}}</small></span>
+              <div class="header notifi-card-header">
+                <i class="bell outline icon notifi-bell-icon"></i>
+                <span class="notifi-title">{{ notif.title || '(sin título)' }}</span>
+                <span ng-if="notif.direction === 'sent'"
+                      class="ui tiny green label notifi-dir-badge">
+                  <i class="arrow up icon"></i> Enviado
+                </span>
+                <span ng-if="notif.direction === 'received'"
+                      class="ui tiny blue label notifi-dir-badge">
+                  <i class="arrow down icon"></i> Recibido
+                </span>
+              </div>
+              <div class="meta notifi-meta">
+                <i class="clock outline icon"></i>
+                {{ notif.time | date:'dd/MM/yyyy HH:mm' }}
+                <span ng-if="notif.app">
+                  &nbsp;·&nbsp;<i class="tag icon"></i> {{ notif.app }}
+                </span>
+              </div>
+              <div class="description notifi-body" ng-if="notif.content">
+                <span ng-if="!notif._expanded && notif.content.length > 160">
+                  {{ notif.content | limitTo:160 }}…
+                  <a class="notifi-toggle" ng-click="notif._expanded = true">Ver más</a>
+                </span>
+                <span ng-if="notif._expanded || notif.content.length <= 160">
+                  {{ notif.content }}
+                  <a class="notifi-toggle" ng-if="notif._expanded" ng-click="notif._expanded = false"> Ver menos</a>
+                </span>
+              </div>
+              <div ng-if="notif.image" class="notifi-image-wrap">
+                <img ng-src="{{ notif.image }}" alt="imagen" class="notifi-image">
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-      <!-- WhatsApp -->
-      <div ng-if="activeTab==='whatsapp'">
-        <div class="ui list">
-          <div class="item" ng-repeat="notif in notifications" ng-if="notif.app && notif.app.indexOf('WhatsApp') !== -1">
-            <i class="whatsapp icon whatsapp-color"></i>
-            <span>{{notif.content || notif}}</span>
-            <span ng-if="notif.image"><br><img ng-src="{{notif.image}}" alt="imagen" style="max-width:150px;max-height:150px;"></span>
-            <span ng-if="notif.time"><br><small>{{notif.time | date:'short'}}</small></span>
-          </div>
-        </div>
-      </div>
-      <!-- Facebook -->
-      <div ng-if="activeTab==='facebook'">
-        <div class="ui list">
-          <div class="item" ng-repeat="notif in notifications" ng-if="notif.app && notif.app.indexOf('Facebook') !== -1">
-            <i class="facebook icon facebook-color"></i>
-            <span>{{notif.content || notif}}</span>
-            <span ng-if="notif.image"><br><img ng-src="{{notif.image}}" alt="imagen" style="max-width:150px;max-height:150px;"></span>
-            <span ng-if="notif.time"><br><small>{{notif.time | date:'short'}}</small></span>
-          </div>
-        </div>
-      </div>
-      <!-- Instagram -->
-      <div ng-if="activeTab==='instagram'">
-        <div class="ui list">
-          <div class="item" ng-repeat="notif in notifications" ng-if="notif.app && notif.app.indexOf('Instagram') !== -1">
-            <i class="instagram icon instagram-color"></i>
-            <span>{{notif.content || notif}}</span>
-            <span ng-if="notif.image"><br><img ng-src="{{notif.image}}" alt="imagen" style="max-width:150px;max-height:150px;"></span>
-            <span ng-if="notif.time"><br><small>{{notif.time | date:'short'}}</small></span>
-          </div>
-        </div>
-      </div>
-      <!-- Twitter -->
-      <div ng-if="activeTab==='twitter'">
-        <div class="ui list">
-          <div class="item" ng-repeat="notif in notifications" ng-if="notif.app && notif.app.indexOf('Twitter') !== -1">
-            <i class="twitter icon twitter-color"></i>
-            <span>{{notif.content || notif}}</span>
-            <span ng-if="notif.image"><br><img ng-src="{{notif.image}}" alt="imagen" style="max-width:150px;max-height:150px;"></span>
-            <span ng-if="notif.time"><br><small>{{notif.time | date:'short'}}</small></span>
-          </div>
-        </div>
-      </div>
-      <!-- Otras -->
-      <div ng-if="activeTab==='others'">
-        <div class="ui list">
-          <div class="item" ng-repeat="notif in notifications" 
-            ng-if="!(notif.app && (notif.app.indexOf('WhatsApp') !== -1 || notif.app.indexOf('Facebook') !== -1 || notif.app.indexOf('Twitter') !== -1 || notif.app.indexOf('Instagram') !== -1))">
-            <i class="bell icon others-color"></i>
-            <span>{{notif.content || notif}}</span>
-            <span ng-if="notif.image"><br><img ng-src="{{notif.image}}" alt="imagen" style="max-width:150px;max-height:150px;"></span>
-            <span ng-if="notif.time"><br><small>{{notif.time | date:'short'}}</small></span>
           </div>
         </div>
       </div>
     </div>
   </div>
 </div>
-
-<style>
-.whatsapp-color, .whatsapp-label { color: #25D366 !important; }
-.facebook-color, .facebook-label { color: #4267B2 !important; }
-.instagram-color, .instagram-label { color: #E1306C !important; }
-.twitter-color, .twitter-label { color: #0088cc !important; }
-.others-color, .others-label { color: #ff69b4 !important; }
-
-/* ← NUEVO: Contenedor con scroll limitado */
-.notifications-container {
-  max-height: 500px !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-}
-</style>
