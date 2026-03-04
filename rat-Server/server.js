@@ -12,6 +12,13 @@ const bcrypt    = require('bcrypt');
 const { spawn, exec } = require('child_process');
 const socketIO  = require('socket.io');
 
+// ---- Optional verbose auth/session/CSRF debug logging ----
+// Set DEBUG_AUTH=1 in your .env to enable. Do NOT enable in production.
+const DEBUG_AUTH = process.env.DEBUG_AUTH === '1' || process.env.DEBUG_AUTH === 'true';
+function debugAuth(...args) {
+  if (DEBUG_AUTH) console.log('[DEBUG_AUTH]', new Date().toISOString(), ...args);
+}
+
 const app    = express();
 const server = http.createServer(app);
 const io     = socketIO(server, {
@@ -70,6 +77,7 @@ let adminHash = null;
 // ---- Auth helpers ----
 function requireAuth(req, res, next) {
   if (req.session && req.session.authenticated) return next();
+  debugAuth('requireAuth: unauthenticated request for', req.method, req.path);
   if (req.headers['x-requested-with'] === 'XMLHttpRequest' || req.path.startsWith('/api/')) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
@@ -102,6 +110,7 @@ const generalLimiter = rateLimit({
 function ensureCsrfToken(req, res, next) {
   if (req.session && !req.session.csrfToken) {
     req.session.csrfToken = crypto.randomBytes(32).toString('hex');
+    debugAuth('Generated new CSRF token for session', req.sessionID);
   }
   next();
 }
@@ -111,6 +120,7 @@ function csrfProtect(req, res, next) {
   const token = req.headers['x-csrf-token'];
   const sessionToken = req.session && req.session.csrfToken;
   if (!token || !sessionToken || token !== sessionToken) {
+    debugAuth('CSRF check failed for', req.method, req.path, '– token mismatch or missing');
     return res.status(403).json({ error: 'CSRF check failed.' });
   }
   // Also validate origin when present (defence-in-depth)
@@ -118,9 +128,11 @@ function csrfProtect(req, res, next) {
   if (origin) {
     try {
       if (new URL(origin).host !== req.headers.host) {
+        debugAuth('CSRF check failed for', req.method, req.path, '– origin mismatch:', origin);
         return res.status(403).json({ error: 'CSRF check failed.' });
       }
     } catch (_) {
+      debugAuth('CSRF check failed for', req.method, req.path, '– invalid origin header:', origin);
       return res.status(403).json({ error: 'CSRF check failed.' });
     }
   }
@@ -172,18 +184,19 @@ app.post('/api/login', loginLimiter, async (req, res) => {
   });
 });
 
-app.post('/api/logout', csrfProtect, (req, res) => {
+app.post('/api/logout', generalLimiter, csrfProtect, (req, res) => {
   req.session.destroy(() => {
     res.clearCookie('connect.sid');
     res.json({ ok: true });
   });
 });
 
-app.get('/api/me', requireAuth, (req, res) => {
+app.get('/api/me', generalLimiter, requireAuth, (req, res) => {
   res.json({ username: req.session.username });
 });
 
 // ---- Apply auth and CSRF protection to all remaining routes ----
+app.use(generalLimiter);
 app.use(requireAuth);
 app.use(csrfProtect);
 
@@ -256,7 +269,11 @@ const wrapSession = middleware => (socket, next) =>
 io.use(wrapSession(sessionMiddleware));
 io.use((socket, next) => {
   const sess = socket.request.session;
-  if (sess && sess.authenticated) return next();
+  if (sess && sess.authenticated) {
+    debugAuth('Socket.IO: authenticated handshake from', socket.handshake.address);
+    return next();
+  }
+  debugAuth('Socket.IO: rejected unauthenticated handshake from', socket.handshake.address);
   next(new Error('Unauthorized'));
 });
 

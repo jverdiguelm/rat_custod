@@ -352,6 +352,50 @@ rat_custod/
 
 ## Troubleshooting
 
+### UI flickering / repeated requests in DevTools
+
+If the admin panel flickers or DevTools shows repeated requests to `/api/csrf-token`,
+`/api/me`, or `/socket.io/?EIO=4...`, the cause is almost always one of:
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| Redirect loop `/` ↔ `/login` | Auth error handler redirected to `/login` even though session is valid; server sends user back to `/` | Ensure you are on the latest code – the redirect guard now only fires on **HTTP 401**, not on transient network errors |
+| Repeated `/socket.io/` polling requests | Socket.IO client kept reconnecting after the server rejected the unauthenticated handshake | The `connect_error` handler in `AppCtrl.js` now calls `socket.disconnect()` on `Unauthorized` errors |
+| `/api/csrf-token` called on every page load | No CSRF token cached in `sessionStorage` | The token is stored in `sessionStorage` after login and after successful fetch; it is cleared on logout |
+| Multiple redirect navigations at once | Both the CSRF-token fetch and the `/api/me` fetch triggered independent `window.location.href = '/login'` calls | The single `window._redirectToLogin()` guard prevents duplicate redirects |
+
+#### How to reproduce and verify the fix
+
+1. Open DevTools → Network tab → check "Preserve log"
+2. Navigate to `http://localhost:3000` – you should see **one** call to `/api/csrf-token`
+   (if sessionStorage is empty) and **one** call to `/api/me`, then no more repeated requests.
+3. Log out and verify you land on `/login` without any redirect loop.
+4. Open a new tab and navigate to `/` without a session – you should be redirected to
+   `/login` exactly once and see no repeated `/socket.io/` polling requests in DevTools.
+
+#### Enable auth debug logging
+
+Add `DEBUG_AUTH=1` to your `.env` file and restart the server.  All auth decisions
+(requireAuth, CSRF validation, Socket.IO handshake) will be logged to stdout with a
+`[DEBUG_AUTH]` prefix.  **Disable this in production** – logs may expose session IDs.
+
+```bash
+# .env
+DEBUG_AUTH=1
+```
+
+Expected output during a successful login + page load:
+```
+[DEBUG_AUTH] 2024-01-01T00:00:00.000Z Generated new CSRF token for session abc123
+[DEBUG_AUTH] 2024-01-01T00:00:01.000Z Socket.IO: authenticated handshake from ::1
+```
+
+Expected output when an unauthenticated request is made:
+```
+[DEBUG_AUTH] 2024-01-01T00:00:00.000Z requireAuth: unauthenticated request for GET /api/me
+[DEBUG_AUTH] 2024-01-01T00:00:01.000Z Socket.IO: rejected unauthenticated handshake from ::1
+```
+
 ### Client can't connect to server
 
 1. Verify main server is running: `curl http://<SERVER_IP>:3000/api/config`

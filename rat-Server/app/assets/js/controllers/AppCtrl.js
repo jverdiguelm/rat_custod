@@ -3,6 +3,16 @@
 
   window.socket = io();
 
+  // Stop reconnection loop when the server rejects the socket handshake due to
+  // missing/invalid auth (avoid the /socket.io polling request storm).
+  window.socket.on('connect_error', function(err) {
+    if (err && err.message === 'Unauthorized') {
+      window.socket.disconnect();
+      console.warn('Socket.IO: auth rejected – stopping reconnection attempts');
+      if (typeof window._redirectToLogin === 'function') window._redirectToLogin();
+    }
+  });
+
   var app = angular.module('myappy', []);
 
   app.filter('toArray', function() {
