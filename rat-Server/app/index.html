@@ -362,14 +362,33 @@
   </script>
 
   <script>
+    // ----- Auth redirect guard -----
+    // Redirect to /login at most once, only on 401 Unauthorized, and never if already on /login.
+    let _redirectingToLogin = false;
+    window._redirectToLogin = function() {
+      if (_redirectingToLogin) return;
+      if (window.location.pathname === '/login') return;
+      _redirectingToLogin = true;
+      sessionStorage.removeItem('csrfToken');
+      window.location.href = '/login';
+    };
+
     // Retrieve stored CSRF token and make it available for API calls
     let csrfToken = sessionStorage.getItem('csrfToken');
     if (!csrfToken) {
       // Fetch from server if not in sessionStorage (e.g. after page refresh)
       fetch('/api/csrf-token', { credentials: 'same-origin' })
-        .then(r => r.ok ? r.json() : Promise.reject(new Error('Failed to fetch CSRF token')))
-        .then(data => { csrfToken = data.csrfToken; sessionStorage.setItem('csrfToken', csrfToken); })
-        .catch((err) => { console.error('Could not obtain CSRF token:', err); window.location.href = '/login'; });
+        .then(r => {
+          if (r.status === 401) { window._redirectToLogin(); return null; }
+          if (!r.ok) throw new Error('Failed to fetch CSRF token (' + r.status + ')');
+          return r.json();
+        })
+        .then(data => {
+          if (!data) return;
+          csrfToken = data.csrfToken;
+          sessionStorage.setItem('csrfToken', csrfToken);
+        })
+        .catch((err) => { console.error('Could not obtain CSRF token:', err); });
     }
 
     function getCsrfHeaders() {
@@ -378,16 +397,21 @@
 
     // Fetch current user and display username
     fetch('/api/me', { credentials: 'same-origin' })
-      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(r => {
+        if (r.status === 401) { window._redirectToLogin(); return null; }
+        if (!r.ok) throw new Error('Failed to fetch user info (' + r.status + ')');
+        return r.json();
+      })
       .then(data => {
+        if (!data) return;
         const el = document.getElementById('adminUsername');
         if (el && data.username) el.textContent = data.username;
       })
-      .catch(() => { window.location.href = '/login'; });
+      .catch((err) => { console.error('Could not fetch user info:', err); });
 
     function doLogout() {
       fetch('/api/logout', { method: 'POST', credentials: 'same-origin', headers: getCsrfHeaders() })
-        .finally(() => { window.location.href = '/login'; });
+        .finally(() => { sessionStorage.removeItem('csrfToken'); window.location.href = '/login'; });
     }
   </script>
 </body>
