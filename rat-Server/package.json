@@ -2,19 +2,21 @@
     "name": "ahmyth-server",
     "version": "1.0.0",
     "description": "",
-    "main": "server.js", 
+    "main": "server.js",
     "scripts": {
-      "start": "node server.js",
-      "clean": "rm -rf ./dist"
+        "start": "node server.js",
+        "clean": "rm -rf ./dist"
     },
     "dependencies": {
-      "body-parser": "^1.20.3",
-      "cors": "^2.8.5",
-      "dotenv": "^9.0.2",
-      "express": "^4.21.2",
-      "socket.io": "^4.8.1"
-      
+        "bcrypt": "^6.0.0",
+        "body-parser": "^1.20.3",
+        "cors": "^2.8.5",
+        "dotenv": "^9.0.2",
+        "express": "^4.21.2",
+        "express-rate-limit": "^8.2.1",
+        "express-session": "^1.19.0",
+        "socket.io": "^4.8.1"
     },
     "license": "GNU GPLv3",
     "author": ""
-  }
+}

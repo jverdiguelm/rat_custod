@@ -1,9 +1,14 @@
+require('dotenv').config();
 const path      = require('path');
 const os        = require('os');
 const fs        = require('fs');
+const crypto    = require('crypto');
 const express   = require('express');
 const http      = require('http');
 const cors      = require('cors');
+const session   = require('express-session');
+const rateLimit = require('express-rate-limit');
+const bcrypt    = require('bcrypt');
 const { spawn, exec } = require('child_process');
 const socketIO  = require('socket.io');
 
@@ -26,11 +31,164 @@ const dynamicSocketIOs = {};
 // ————————————————————————————————————————————————————————————————
 // Middlewares y archivos estáticos
 // ————————————————————————————————————————————————————————————————
+
+// ---- Session setup ----
+if (!process.env.SESSION_SECRET) {
+  console.warn('⚠️  SESSION_SECRET is not set. Using a random secret – all sessions will be invalidated on restart. Set SESSION_SECRET in .env for production.');
+}
+const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
+const sessionMiddleware = session({
+  secret: sessionSecret,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 8 * 60 * 60 * 1000 // 8 hours
+  }
+});
+
+// ---- Admin credentials (loaded asynchronously at startup) ----
+let adminUser = 'admin';
+let adminHash = null;
+
+(async () => {
+  adminUser = process.env.ADMIN_USER || 'admin';
+  if (process.env.ADMIN_PASSWORD_HASH) {
+    adminHash = process.env.ADMIN_PASSWORD_HASH;
+    console.log('✅ Admin credentials loaded from ADMIN_PASSWORD_HASH');
+  } else if (process.env.ADMIN_PASSWORD) {
+    console.warn('⚠️  ADMIN_PASSWORD provided as plaintext – hashing on startup. Set ADMIN_PASSWORD_HASH for production!');
+    adminHash = await bcrypt.hash(process.env.ADMIN_PASSWORD, 12);
+  } else {
+    console.error('❌ No admin password configured! Set ADMIN_PASSWORD_HASH (bcrypt) or ADMIN_PASSWORD env var.');
+    process.exit(1);
+  }
+})();
+
+// ---- Auth helpers ----
+function requireAuth(req, res, next) {
+  if (req.session && req.session.authenticated) return next();
+  if (req.headers['x-requested-with'] === 'XMLHttpRequest' || req.path.startsWith('/api/')) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  res.redirect('/login');
+}
+
+// ---- Login rate limiter (10 attempts per 15 min per IP) ----
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many login attempts. Please try again later.' }
+});
+
+// ---- General rate limiter for public pages (100 req / 15 min per IP) ----
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+// ---- CSRF protection: session-stored token validated via X-CSRF-Token header ----
+// Tokens are generated per-session and returned by GET /api/csrf-token.
+// All authenticated state-changing requests must include the token in the
+// X-CSRF-Token header. This satisfies the double-submit / synchronizer-token
+// CSRF defence patterns.
+
+function ensureCsrfToken(req, res, next) {
+  if (req.session && !req.session.csrfToken) {
+    req.session.csrfToken = crypto.randomBytes(32).toString('hex');
+  }
+  next();
+}
+
+function csrfProtect(req, res, next) {
+  if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') return next();
+  const token = req.headers['x-csrf-token'];
+  const sessionToken = req.session && req.session.csrfToken;
+  if (!token || !sessionToken || token !== sessionToken) {
+    return res.status(403).json({ error: 'CSRF check failed.' });
+  }
+  // Also validate origin when present (defence-in-depth)
+  const origin = req.headers.origin || req.headers.referer;
+  if (origin) {
+    try {
+      if (new URL(origin).host !== req.headers.host) {
+        return res.status(403).json({ error: 'CSRF check failed.' });
+      }
+    } catch (_) {
+      return res.status(403).json({ error: 'CSRF check failed.' });
+    }
+  }
+  next();
+}
+
 app.use(cors());
 app.use(express.json());
+app.use(sessionMiddleware);
+app.use(ensureCsrfToken);
+
+const publicDir = path.join(__dirname, 'app');
+
+// ---- Public routes (no auth required) ----
+app.get('/login', generalLimiter, (req, res) => {
+  if (req.session && req.session.authenticated) return res.redirect('/');
+  res.sendFile(path.join(publicDir, 'login.html'));
+});
+
+// Expose CSRF token to the frontend (requires a session but no auth)
+app.get('/api/csrf-token', (req, res) => {
+  res.json({ csrfToken: req.session.csrfToken });
+});
+
+app.post('/api/login', loginLimiter, async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password are required.' });
+  }
+  if (!adminHash) {
+    return res.status(503).json({ error: 'Server credentials not yet initialized.' });
+  }
+  if (username !== adminUser) {
+    return res.status(401).json({ error: 'Invalid credentials.' });
+  }
+  const match = await bcrypt.compare(password, adminHash);
+  if (!match) {
+    return res.status(401).json({ error: 'Invalid credentials.' });
+  }
+  req.session.regenerate((err) => {
+    if (err) {
+      console.error('Session regeneration error:', err);
+      return res.status(500).json({ error: 'Session error.' });
+    }
+    req.session.authenticated = true;
+    req.session.username = username;
+    req.session.csrfToken = crypto.randomBytes(32).toString('hex');
+    res.json({ ok: true, csrfToken: req.session.csrfToken });
+  });
+});
+
+app.post('/api/logout', csrfProtect, (req, res) => {
+  req.session.destroy(() => {
+    res.clearCookie('connect.sid');
+    res.json({ ok: true });
+  });
+});
+
+app.get('/api/me', requireAuth, (req, res) => {
+  res.json({ username: req.session.username });
+});
+
+// ---- Apply auth and CSRF protection to all remaining routes ----
+app.use(requireAuth);
+app.use(csrfProtect);
+
 app.use('/node_modules', express.static(path.join(__dirname, 'node_modules')));
 app.use('/node_modules', express.static(path.join(__dirname, 'app/node_modules')));
-const publicDir = path.join(__dirname, 'app');
 app.use(express.static(publicDir));
 app.use('/dist', express.static(path.join(publicDir, 'dist')));
 
@@ -89,7 +247,20 @@ app.get('/api/notifications/:victim', (req, res) => {
   });
 });
 
-// —————————————————————————————————————————————————————��——————————
+// —————————————————————————————————————————————————————————————————
+// Socket.io auth middleware for admin namespace (main io on port 3000)
+// ————————————————————————————————————————————————————————————————
+const wrapSession = middleware => (socket, next) =>
+  middleware(socket.request, socket.request.res || {}, next);
+
+io.use(wrapSession(sessionMiddleware));
+io.use((socket, next) => {
+  const sess = socket.request.session;
+  if (sess && sess.authenticated) return next();
+  next(new Error('Unauthorized'));
+});
+
+// ————————————————————————————————————————————————————————————————
 // Conexión WebSocket principal (UI)
 // ————————————————————————————————————————————————————————————————
 io.on('connection', socket => {

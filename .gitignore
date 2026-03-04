@@ -6,6 +6,8 @@ build/
 *.apk
 Output/
 Logs/
+Downloads/
 local.properties
 .gradle/
 .idea/
+.env
