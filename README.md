@@ -299,6 +299,18 @@ Builds a custom APK with specified configuration. See server documentation for d
 
 Returns notification history for a specific victim device.
 
+### Notifications UI
+
+The Notifications tab in the Lab modal (`<lab-notifi>` directive) uses a modern **card-based layout**:
+
+- **Date sections** — notifications are grouped into *Hoy* (Today), *Ayer* (Yesterday), and *Anteriores* (Earlier) based on the notification timestamp.
+- **Search box** — filters cards in real time by title or content; the result count updates accordingly.
+- **Direction badge** — displays a green *Enviado* or blue *Recibido* label when the `direction` field is present.
+- **Expand / collapse** — content longer than 160 characters is truncated with a *Ver más* link; clicking it expands inline without navigation.
+- **Generic bell icon** — uses the Fomantic-UI `bell outline` icon for a neutral, app-agnostic appearance.
+- **Performance** — `ng-repeat` uses `track by $index`, auto-refresh remains at 5 s, and no extra watchers are added.
+- **No app-specific classification** — the layout is generic and privacy-preserving; no WhatsApp/Telegram/Facebook grouping or filtering.
+
 ## Development
 
 ### Prerequisites

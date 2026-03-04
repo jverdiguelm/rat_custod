@@ -222,3 +222,143 @@ img {
   filter: none !important;
   -webkit-filter: none !important;
 }
+/* ======================================================
+   NOTIFICATIONS CARD LAYOUT
+   ====================================================== */
+
+/* Scrollable container */
+.notifications-container {
+  max-height: 500px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Toolbar: search + count */
+.notifi-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.notifi-search {
+  min-width: 220px;
+  flex: 1 1 220px;
+  max-width: 400px;
+}
+
+/* Date section divider */
+.notifi-date-label {
+  margin: 18px 0 8px 0;
+}
+
+/* Cards grid */
+.notifi-cards {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  margin: 0 0 8px 0 !important;
+}
+
+/* Individual card */
+.notifi-card {
+  min-width: 260px;
+  max-width: 360px;
+  flex: 1 1 260px;
+  border: 1px solid #e0e0e0 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08) !important;
+  transition: box-shadow 0.15s ease;
+  background: #fff;
+}
+
+.notifi-card:hover {
+  box-shadow: 0 3px 10px rgba(0,0,0,.14) !important;
+}
+
+/* Card header row */
+.notifi-card-header {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  flex-wrap: wrap;
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  color: #333 !important;
+}
+
+.notifi-bell-icon {
+  color: #e84393 !important;
+  font-size: 1.1em !important;
+  flex-shrink: 0;
+}
+
+.notifi-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notifi-dir-badge {
+  flex-shrink: 0;
+}
+
+/* Meta row */
+.notifi-meta {
+  font-size: 0.8rem !important;
+  color: #888 !important;
+  margin-top: 4px !important;
+}
+
+/* Body / content */
+.notifi-body {
+  margin-top: 8px !important;
+  font-size: 0.88rem !important;
+  color: #444 !important;
+  word-break: break-word;
+  line-height: 1.5;
+}
+
+/* Show more / less toggle */
+.notifi-toggle {
+  color: #e84393;
+  cursor: pointer;
+  font-size: 0.82rem;
+  margin-left: 4px;
+  text-decoration: underline dotted;
+}
+
+.notifi-toggle:hover {
+  color: #c0306e;
+}
+
+/* Notification image */
+.notifi-image-wrap {
+  margin-top: 8px;
+  text-align: center;
+}
+
+.notifi-image {
+  max-width: 150px;
+  max-height: 150px;
+  border-radius: 4px;
+  border: 1px solid #eee;
+}
+
+/* Empty state */
+.notifi-empty {
+  text-align: center;
+  color: #aaa;
+  margin-top: 20px;
+}
+
+/* Responsive: stack cards on small screens */
+@media (max-width: 600px) {
+  .notifi-card {
+    min-width: 100%;
+    max-width: 100%;
+  }
+}
