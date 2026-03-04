@@ -362,6 +362,20 @@
   </script>
 
   <script>
+    // Retrieve stored CSRF token and make it available for API calls
+    let _csrfToken = sessionStorage.getItem('csrfToken');
+    if (!_csrfToken) {
+      // Fetch from server if not in sessionStorage (e.g. after page refresh)
+      fetch('/api/csrf-token', { credentials: 'same-origin' })
+        .then(r => r.ok ? r.json() : Promise.reject())
+        .then(data => { _csrfToken = data.csrfToken; sessionStorage.setItem('csrfToken', _csrfToken); })
+        .catch(() => {});
+    }
+
+    function getCsrfHeaders() {
+      return _csrfToken ? { 'X-CSRF-Token': _csrfToken } : {};
+    }
+
     // Fetch current user and display username
     fetch('/api/me', { credentials: 'same-origin' })
       .then(r => r.ok ? r.json() : Promise.reject())
@@ -372,7 +386,7 @@
       .catch(() => { window.location.href = '/login'; });
 
     function doLogout() {
-      fetch('/api/logout', { method: 'POST', credentials: 'same-origin' })
+      fetch('/api/logout', { method: 'POST', credentials: 'same-origin', headers: getCsrfHeaders() })
         .finally(() => { window.location.href = '/login'; });
     }
   </script>

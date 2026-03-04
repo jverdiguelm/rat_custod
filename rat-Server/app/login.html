@@ -161,6 +161,10 @@
         });
 
         if (res.ok) {
+          const data = await res.json();
+          if (data.csrfToken) {
+            sessionStorage.setItem('csrfToken', data.csrfToken);
+          }
           window.location.href = '/';
         } else {
           const data = await res.json().catch(() => ({}));

@@ -90,23 +90,36 @@ const generalLimiter = rateLimit({
   legacyHeaders: false
 });
 
-// ---- CSRF protection for state-changing admin routes ----
-// Validates that the Origin or Referer header matches the server host.
-// JSON-only POST endpoints are not vulnerable to traditional form-based CSRF,
-// and the session cookie already has SameSite=strict, but this provides an
-// extra defence-in-depth layer for any future form-based mutations.
+// ---- CSRF protection: session-stored token validated via X-CSRF-Token header ----
+// Tokens are generated per-session and returned by GET /api/csrf-token.
+// All authenticated state-changing requests must include the token in the
+// X-CSRF-Token header. This satisfies the double-submit / synchronizer-token
+// CSRF defence patterns.
+
+function ensureCsrfToken(req, res, next) {
+  if (req.session && !req.session.csrfToken) {
+    req.session.csrfToken = crypto.randomBytes(32).toString('hex');
+  }
+  next();
+}
+
 function csrfProtect(req, res, next) {
-  if (req.method === 'GET' || req.method === 'HEAD') return next();
+  if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') return next();
+  const token = req.headers['x-csrf-token'];
+  const sessionToken = req.session && req.session.csrfToken;
+  if (!token || !sessionToken || token !== sessionToken) {
+    return res.status(403).json({ error: 'CSRF check failed.' });
+  }
+  // Also validate origin when present (defence-in-depth)
   const origin = req.headers.origin || req.headers.referer;
-  if (!origin) return next(); // No origin header – same-origin non-browser clients are allowed
-  try {
-    const originHost = new URL(origin).host;
-    const serverHost = req.headers.host;
-    if (originHost !== serverHost) {
+  if (origin) {
+    try {
+      if (new URL(origin).host !== req.headers.host) {
+        return res.status(403).json({ error: 'CSRF check failed.' });
+      }
+    } catch (_) {
       return res.status(403).json({ error: 'CSRF check failed.' });
     }
-  } catch (_) {
-    return res.status(403).json({ error: 'CSRF check failed.' });
   }
   next();
 }
@@ -114,6 +127,7 @@ function csrfProtect(req, res, next) {
 app.use(cors());
 app.use(express.json());
 app.use(sessionMiddleware);
+app.use(ensureCsrfToken);
 
 const publicDir = path.join(__dirname, 'app');
 
@@ -123,7 +137,12 @@ app.get('/login', generalLimiter, (req, res) => {
   res.sendFile(path.join(publicDir, 'login.html'));
 });
 
-app.post('/api/login', loginLimiter, csrfProtect, async (req, res) => {
+// Expose CSRF token to the frontend (requires a session but no auth)
+app.get('/api/csrf-token', (req, res) => {
+  res.json({ csrfToken: req.session.csrfToken });
+});
+
+app.post('/api/login', loginLimiter, async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) {
     return res.status(400).json({ error: 'Username and password are required.' });
@@ -142,7 +161,8 @@ app.post('/api/login', loginLimiter, csrfProtect, async (req, res) => {
     if (err) return res.status(500).json({ error: 'Session error.' });
     req.session.authenticated = true;
     req.session.username = username;
-    res.json({ ok: true });
+    req.session.csrfToken = crypto.randomBytes(32).toString('hex');
+    res.json({ ok: true, csrfToken: req.session.csrfToken });
   });
 });
 
