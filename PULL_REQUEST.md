@@ -1,0 +1,3 @@
+### Pull Request: [WIP] Address Issues with Camera, Microphone, and Permissions
+
+This PR includes all necessary updates to address the reported issues with camera initialization, microphone functionality, and permission handling. The changes include runtime permission checks, improved error logging, and enhanced compatibility with modern Android APIs. Further increments will follow to stabilize the application.
