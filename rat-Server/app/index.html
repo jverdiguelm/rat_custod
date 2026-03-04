@@ -116,6 +116,12 @@
   <div class="ui top attached tabular menu">
     <a class="item active" data-tab="first"><i class="large eye icon"></i> Devices</a>
     <a class="item" data-tab="second"><i class="large cogs icon"></i> APK Builder</a>
+    <div class="right menu">
+      <div class="item">
+        <span id="adminUsername" style="color:#666;margin-right:0.8em;font-size:0.9em;"></span>
+        <button class="ui mini button" id="logoutBtn" onclick="doLogout()"><i class="sign-out icon"></i> Logout</button>
+      </div>
+    </div>
   </div>
 
   <!-- Victims Lab (primera pestaña) -->
@@ -353,6 +359,22 @@
 
   <script>
     $('.menu .item').tab();
+  </script>
+
+  <script>
+    // Fetch current user and display username
+    fetch('/api/me', { credentials: 'same-origin' })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(data => {
+        const el = document.getElementById('adminUsername');
+        if (el && data.username) el.textContent = data.username;
+      })
+      .catch(() => { window.location.href = '/login'; });
+
+    function doLogout() {
+      fetch('/api/logout', { method: 'POST', credentials: 'same-origin' })
+        .finally(() => { window.location.href = '/login'; });
+    }
   </script>
 </body>
 </html>

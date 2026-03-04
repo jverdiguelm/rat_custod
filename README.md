@@ -7,6 +7,7 @@ RAT Custod is a remote administration tool consisting of an Android client and a
 ## Features
 
 - Remote device management
+- **Secure admin panel login** (session-based, bcrypt, rate-limited)
 - Socket.IO-based real-time communication
 - Dynamic server configuration (NEW!)
 - Notification monitoring
@@ -38,14 +39,44 @@ RAT Custod is a remote administration tool consisting of an Android client and a
    }
    ```
 
-4. Start the server:
+4. **Set up admin credentials** – copy `.env.example` to `.env` and fill in values:
+   ```bash
+   cp .env.example .env
+   ```
+
+   Then edit `.env`:
+
+   | Variable | Description | Required |
+   |---|---|---|
+   | `ADMIN_USER` | Admin username (default: `admin`) | No |
+   | `ADMIN_PASSWORD_HASH` | Bcrypt hash of the admin password (recommended) | Yes* |
+   | `ADMIN_PASSWORD` | Plaintext password (hashed at startup, warns in logs) | Yes* |
+   | `SESSION_SECRET` | Random secret for session cookies | Recommended |
+   | `PORT` | Web server port (default: `3000`) | No |
+   | `NODE_ENV` | `development` or `production` | No |
+
+   \* One of `ADMIN_PASSWORD_HASH` or `ADMIN_PASSWORD` must be set.
+
+   **Generate a bcrypt hash:**
+   ```bash
+   node -e "require('bcrypt').hash('yourpassword', 12).then(console.log)"
+   ```
+
+   **Generate a session secret:**
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+   ```
+
+5. Start the server:
    ```bash
    node server.js
    ```
 
-   The server will start on port 3000 (configurable via PORT environment variable)
+   The server will start on port 3000 (configurable via `PORT` environment variable).
 
-5. **IMPORTANT**: Start a victim listener for Android client connections:
+6. Open the admin panel at `http://localhost:3000` – you will be redirected to the login page.
+
+7. **IMPORTANT**: Start a victim listener for Android client connections:
    - Open the web UI at http://localhost:3000
    - Navigate to "Victims Lab"
    - Start a listener on port 8000 (or your configured SERVER_PORT)
@@ -226,6 +257,24 @@ To build a custom APK with specific server configuration:
 
 ## API Endpoints
 
+### Authentication Endpoints
+
+**GET** `/login` – Login page (public)
+
+**POST** `/api/login` – Authenticate admin
+```json
+{ "username": "admin", "password": "yourpassword" }
+```
+Returns `{ "ok": true }` on success; sets an HttpOnly session cookie.
+Rate-limited to 10 attempts per 15 minutes per IP.
+
+**POST** `/api/logout` – Destroy session
+
+**GET** `/api/me` – Returns current authenticated user
+```json
+{ "username": "admin" }
+```
+
 ### Configuration Endpoint
 
 **GET** `/api/config`
@@ -285,10 +334,21 @@ rat_custod/
 
 ⚠️ **Important**: This tool is intended for educational and authorized use only.
 
-- The `/api/config` endpoint is unauthenticated
-- Communication uses cleartext HTTP (not HTTPS)
-- Requires extensive Android permissions
-- Should only be used on devices you own or have explicit permission to manage
+### Admin Panel Security
+
+- All admin panel routes require authentication via a session cookie (HttpOnly, SameSite=Strict).
+- The main Socket.IO namespace (`/`) requires an authenticated session.
+- Login attempts are rate-limited (10 per 15 min per IP).
+- Passwords are stored as bcrypt hashes (cost factor 12); never stored in plaintext.
+- Set `NODE_ENV=production` and use HTTPS in production to enable `Secure` cookie flag.
+- Never commit the `.env` file; use `.env.example` as a template.
+
+### Device Communication
+
+- Device (victim) listeners run on separate ports (e.g., 8000) and are not authenticated to allow Android client connections.
+- Communication uses cleartext HTTP/WebSocket (add TLS termination via reverse proxy for production).
+- Requires extensive Android permissions.
+- Should only be used on devices you own or have explicit permission to manage.
 
 ## Troubleshooting
 
