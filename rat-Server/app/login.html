@@ -14,9 +14,23 @@
       align-items: center;
       justify-content: center;
       font-family: 'Segoe UI', system-ui, sans-serif;
+      background-image: url('assets/img/fondo-login.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.50);
+      z-index: 0;
     }
 
     .card {
+      position: relative;
+      z-index: 1;
       border-radius: 12px;
       padding: 2.5rem 2rem;
       width: 100%;

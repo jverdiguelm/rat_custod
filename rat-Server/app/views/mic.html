@@ -1,4 +1,17 @@
 <div class="ui segment h100">
+  <style>
+    #player {
+      filter: invert(1) hue-rotate(180deg);
+      opacity: 0.85;
+    }
+    #player::-webkit-media-controls-panel {
+      background-color: #1a1a2e;
+    }
+    .mic-player-segment {
+      background: #1a1a2e !important;
+      border-color: #333 !important;
+    }
+  </style>
   <div class="ui grid center aligned h100">
     <div class="row h30">
       <div class="column">
@@ -16,7 +29,7 @@
     </div>
     <div class="row h70">
       <div class="column h100">
-        <div class="ui segment">
+        <div class="ui segment mic-player-segment">
           <audio controls id="player" style="width:100%">
             <source src="" id="sourceMp3" type="audio/mp3">
             Not Supported.
