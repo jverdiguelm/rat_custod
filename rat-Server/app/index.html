@@ -10,6 +10,8 @@
   <!-- Leaflet CSS (¡NECESARIO para mostrar el mapa!) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="node_modules/fomantic-ui/dist/semantic.min.css" />
+  <!-- Dark glassmorphism theme – loaded last to override framework defaults -->
+  <link rel="stylesheet" href="assets/css/theme-dark.css" />
 
   <!-- JS libs -->
   <script src="node_modules/jquery/dist/jquery.min.js"></script>
@@ -110,7 +112,7 @@
     }
   </style>
 </head>
-<body ng-controller="AppCtrl" class="draggable">
+<body ng-controller="AppCtrl" class="draggable theme-dark">
 
   <!-- Menú de pestañas -->
   <div class="ui top attached tabular menu">
@@ -142,10 +144,10 @@
                   <div class="ui label">Port</div>
                   <input type="text" ng-model="port" placeholder="42474">
                 </div>
-                <button ng-click="clearLogs(); Listen(port)" class="ui labeled icon black button">
+                <button ng-click="clearLogs(); Listen(port)" class="ui labeled icon button listen-btn">
                   <i class="terminal icon"></i> Listen
                 </button>
-                <button ng-click="clearLogs(); StopListening(port)" class="ui labeled icon black button">
+                <button ng-click="clearLogs(); StopListening(port)" class="ui labeled icon button stop-btn">
                   <i class="terminal icon"></i> Stop
                 </button>
               </div>

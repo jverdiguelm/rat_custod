@@ -1,0 +1,453 @@
+/* ============================================================
+   DARK GLASSMORPHISM THEME  –  theme-dark.css
+   ============================================================
+   CSS variables – tweak these to restyle the whole app:
+
+   --glass-bg        semi-transparent panel background
+   --glass-blur      backdrop blur amount
+   --glass-border    subtle panel border
+   --body-bg         fallback body colour (used when image is missing)
+   --accent          primary accent / link colour
+   --text-primary    main text colour
+   --text-secondary  muted / label text colour
+
+   Background image:
+     Place your image at  assets/img/fondo-s.png
+     (relative to this CSS file: ../img/fondo-s.png)
+     If the file is absent the fallback --body-bg colour is shown.
+   ============================================================ */
+
+:root {
+  --glass-bg:          rgba(18, 18, 30, 0.58);
+  --glass-blur:        14px;
+  --glass-border:      rgba(255, 255, 255, 0.10);
+  --glass-shadow:      0 8px 32px rgba(0, 0, 0, 0.50);
+
+  --body-bg:           #0d1117;
+
+  --accent:            #5b9cf6;
+  --accent-hover:      #4285e0;
+
+  --btn-listen-bg:     rgba(22, 101, 52, 0.78);
+  --btn-listen-hover:  rgba(21, 128, 61, 0.92);
+  --btn-stop-bg:       rgba(153, 27, 27, 0.78);
+  --btn-stop-hover:    rgba(185, 28, 28, 0.92);
+
+  --text-primary:      #e8eaf0;
+  --text-secondary:    #9ca3af;
+
+  --table-header-bg:   rgba(255, 255, 255, 0.07);
+  --table-row-hover:   rgba(255, 255, 255, 0.06);
+}
+
+/* =============================================================
+   BODY & BACKGROUND
+   ============================================================= */
+
+body.theme-dark,
+html body.theme-dark {
+  background-color: var(--body-bg);          /* fallback if image missing */
+  background-image: url('../img/fondo-s.png');
+  background-size: cover;
+  background-position: center center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+/* =============================================================
+   GLASS PANELS  –  Fomantic/Semantic UI segments
+   ============================================================= */
+
+body.theme-dark .ui.segment,
+body.theme-dark .ui.segments,
+body.theme-dark .ui.horizontal.segments {
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: var(--glass-shadow) !important;
+  color: var(--text-primary) !important;
+}
+
+/* =============================================================
+   MENU  –  top tabular nav + lab inner tabs
+   ============================================================= */
+
+body.theme-dark .ui.menu {
+  background: rgba(10, 10, 20, 0.72) !important;
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: var(--glass-shadow) !important;
+}
+
+body.theme-dark .ui.menu .item {
+  color: var(--text-secondary) !important;
+}
+
+body.theme-dark .ui.menu .item:hover,
+body.theme-dark .ui.menu .item.active {
+  background: rgba(255, 255, 255, 0.10) !important;
+  color: var(--text-primary) !important;
+}
+
+/* =============================================================
+   TABLES
+   ============================================================= */
+
+body.theme-dark .ui.table {
+  background: transparent !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--glass-border) !important;
+}
+
+body.theme-dark .ui.table thead th {
+  background: var(--table-header-bg) !important;
+  color: var(--text-primary) !important;
+  border-bottom: 1px solid var(--glass-border) !important;
+}
+
+body.theme-dark .ui.table tbody tr {
+  background: transparent !important;
+  color: var(--text-primary) !important;
+}
+
+body.theme-dark .ui.table tbody tr:hover {
+  background: var(--table-row-hover) !important;
+}
+
+body.theme-dark .ui.table td {
+  border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+  color: var(--text-primary) !important;
+}
+
+body.theme-dark .ui.table.striped tbody tr:nth-child(2n) {
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* =============================================================
+   LAB MODAL  –  device detail overlay
+   ============================================================= */
+
+body.theme-dark .lab-card {
+  background: rgba(8, 8, 18, 0.82) !important;
+  backdrop-filter: blur(calc(var(--glass-blur) + 4px));
+  -webkit-backdrop-filter: blur(calc(var(--glass-blur) + 4px));
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.70) !important;
+  color: var(--text-primary) !important;
+}
+
+body.theme-dark .lab-card .ui.menu {
+  background: rgba(8, 8, 18, 0.88) !important;
+}
+
+body.theme-dark .lab-close {
+  color: var(--text-secondary) !important;
+}
+
+body.theme-dark .lab-close:hover {
+  color: var(--text-primary) !important;
+}
+
+/* =============================================================
+   BUTTONS  –  glass default + listen / stop overrides
+   ============================================================= */
+
+body.theme-dark .ui.button {
+  background: rgba(255, 255, 255, 0.10) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--glass-border) !important;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+body.theme-dark .ui.button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.18) !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* Listen button – green (success) */
+body.theme-dark .ui.button.listen-btn {
+  background: var(--btn-listen-bg) !important;
+  border-color: rgba(34, 197, 94, 0.35) !important;
+  color: #d1fae5 !important;
+}
+
+body.theme-dark .ui.button.listen-btn:hover:not(:disabled),
+body.theme-dark .ui.button.listen-btn:focus {
+  background: var(--btn-listen-hover) !important;
+  box-shadow: 0 2px 14px rgba(34, 197, 94, 0.30) !important;
+}
+
+/* Stop button – red (danger) */
+body.theme-dark .ui.button.stop-btn {
+  background: var(--btn-stop-bg) !important;
+  border-color: rgba(239, 68, 68, 0.35) !important;
+  color: #fecaca !important;
+}
+
+body.theme-dark .ui.button.stop-btn:hover:not(:disabled),
+body.theme-dark .ui.button.stop-btn:focus {
+  background: var(--btn-stop-hover) !important;
+  box-shadow: 0 2px 14px rgba(239, 68, 68, 0.30) !important;
+}
+
+/* Primary accent buttons (APK builder, etc.) */
+body.theme-dark .ui.primary.button {
+  background: rgba(91, 156, 246, 0.68) !important;
+  border-color: rgba(91, 156, 246, 0.35) !important;
+  color: var(--text-primary) !important;
+}
+
+body.theme-dark .ui.primary.button:hover:not(:disabled) {
+  background: rgba(66, 133, 224, 0.88) !important;
+}
+
+/* =============================================================
+   FORMS & INPUTS
+   ============================================================= */
+
+body.theme-dark .ui.form .field > label,
+body.theme-dark label {
+  color: var(--text-secondary) !important;
+}
+
+body.theme-dark .ui.form input[type="text"],
+body.theme-dark .ui.form input[type="password"],
+body.theme-dark .ui.input input,
+body.theme-dark input[type="text"],
+body.theme-dark input[type="password"],
+body.theme-dark textarea {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid var(--glass-border) !important;
+  color: var(--text-primary) !important;
+}
+
+body.theme-dark .ui.form input:focus,
+body.theme-dark .ui.input input:focus,
+body.theme-dark input:focus,
+body.theme-dark textarea:focus {
+  border-color: var(--accent) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  outline: none;
+}
+
+/* Labeled input (Port field) */
+body.theme-dark .ui.labeled.input > .label {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--glass-border) !important;
+}
+
+/* =============================================================
+   TYPOGRAPHY
+   ============================================================= */
+
+body.theme-dark h1,
+body.theme-dark h2,
+body.theme-dark h3,
+body.theme-dark h4,
+body.theme-dark h5,
+body.theme-dark h6 {
+  color: var(--text-primary) !important;
+}
+
+body.theme-dark .ui.header {
+  color: var(--text-primary) !important;
+}
+
+body.theme-dark .ui.dividing.header {
+  border-bottom-color: var(--glass-border) !important;
+}
+
+body.theme-dark p,
+body.theme-dark small,
+body.theme-dark code {
+  color: var(--text-primary);
+}
+
+body.theme-dark code {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+
+/* =============================================================
+   LOG AREAS
+   ============================================================= */
+
+body.theme-dark #log,
+body.theme-dark #logy,
+body.theme-dark #apkLog {
+  background: rgba(0, 0, 0, 0.55) !important;
+  border: 1px solid var(--glass-border) !important;
+  color: #86efac !important;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* =============================================================
+   MESSAGES / ALERTS
+   ============================================================= */
+
+body.theme-dark .ui.message {
+  background: var(--glass-bg) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: none !important;
+}
+
+body.theme-dark .ui.black.message {
+  background: rgba(0, 0, 0, 0.58) !important;
+  color: #86efac !important;
+}
+
+body.theme-dark .ui.info.message {
+  background: rgba(59, 130, 246, 0.14) !important;
+  color: #93c5fd !important;
+  border-color: rgba(59, 130, 246, 0.28) !important;
+}
+
+body.theme-dark .ui.positive.message {
+  background: rgba(34, 197, 94, 0.12) !important;
+  color: #86efac !important;
+  border-color: rgba(34, 197, 94, 0.28) !important;
+}
+
+body.theme-dark .ui.negative.message,
+body.theme-dark .ui.red.message {
+  background: rgba(239, 68, 68, 0.12) !important;
+  color: #fca5a5 !important;
+  border-color: rgba(239, 68, 68, 0.28) !important;
+}
+
+/* =============================================================
+   LABELS & RIBBON
+   ============================================================= */
+
+body.theme-dark .ui.label {
+  background: rgba(255, 255, 255, 0.10) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--glass-border) !important;
+}
+
+body.theme-dark .ui.black.ribbon.label,
+body.theme-dark .ui.black.label {
+  background: rgba(25, 25, 40, 0.80) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--glass-border) !important;
+}
+
+body.theme-dark .ui.green.label,
+body.theme-dark .ui.tiny.green.label {
+  background: rgba(22, 101, 52, 0.75) !important;
+  color: #d1fae5 !important;
+  border-color: rgba(34, 197, 94, 0.30) !important;
+}
+
+body.theme-dark .ui.blue.label,
+body.theme-dark .ui.tiny.blue.label {
+  background: rgba(30, 64, 175, 0.70) !important;
+  color: #bfdbfe !important;
+  border-color: rgba(59, 130, 246, 0.30) !important;
+}
+
+/* =============================================================
+   NOTIFICATION CARDS  –  dark overrides
+   ============================================================= */
+
+body.theme-dark .notifi-card {
+  background: rgba(18, 18, 32, 0.68) !important;
+  border-color: var(--glass-border) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+body.theme-dark .notifi-card:hover {
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.40) !important;
+}
+
+body.theme-dark .notifi-card-header {
+  color: var(--text-primary) !important;
+}
+
+body.theme-dark .notifi-meta {
+  color: var(--text-secondary) !important;
+}
+
+body.theme-dark .notifi-body {
+  color: #c9cdd6 !important;
+}
+
+body.theme-dark .notifi-count.ui.label {
+  background: rgba(91, 156, 246, 0.20) !important;
+  color: #93c5fd !important;
+  border-color: rgba(91, 156, 246, 0.25) !important;
+}
+
+/* =============================================================
+   LOGIN PAGE  –  glass card
+   ============================================================= */
+
+body.theme-dark .login-glass {
+  background: rgba(8, 8, 20, 0.68) !important;
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, 0.70) !important;
+}
+
+/* =============================================================
+   MISC  –  admin username, loaders, checkboxes
+   ============================================================= */
+
+body.theme-dark #adminUsername {
+  color: var(--text-secondary) !important;
+}
+
+body.theme-dark .ui.loader:before {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+body.theme-dark .ui.loader:after {
+  border-top-color: var(--accent);
+}
+
+body.theme-dark .ui.checkbox label {
+  color: var(--text-primary) !important;
+}
+
+body.theme-dark .ui.horizontal.divider {
+  color: var(--text-secondary) !important;
+}
+
+body.theme-dark .ui.horizontal.divider::before,
+body.theme-dark .ui.horizontal.divider::after {
+  background-color: var(--glass-border) !important;
+}
+
+/* =============================================================
+   CUSTOM SCROLLBAR  (webkit)
+   ============================================================= */
+
+body.theme-dark ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+body.theme-dark ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+body.theme-dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 3px;
+}
+
+body.theme-dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.30);
+}
