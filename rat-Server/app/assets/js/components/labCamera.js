@@ -12,7 +12,7 @@ angular.module('myappy').directive('labCamera', function() {
           <div style="margin: 10px 0;">
             <button ng-repeat="cam in cameras"
                     ng-click="setCamera(cam.id)"
-                    ng-class="{'ui button': true, 'black': selectedCameraId === cam.id, 'grey': selectedCameraId !== cam.id}"
+                    ng-class="{'ui button camera-select-btn': true, 'camera-select-btn--active': selectedCameraId === cam.id}"
                     style="margin-right: 5px;">
               {{cam.name}}
             </button>
