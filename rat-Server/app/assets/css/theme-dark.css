@@ -44,8 +44,8 @@
    BODY & BACKGROUND
    ============================================================= */
 
-body.theme-dark,
-html body.theme-dark {
+body.theme-dark:not(.login-page),
+html body.theme-dark:not(.login-page) {
   background-color: var(--body-bg);          /* fallback if image missing */
   background-image: url('../img/fondo-s.png');
   background-size: cover;
@@ -436,6 +436,8 @@ body.theme-dark .notifi-count.ui.label {
 body.theme-dark audio {
   filter: invert(1) hue-rotate(180deg);
   border-radius: 4px;
+  opacity: 1;
+  color-scheme: dark;
 }
 
 /* =============================================================
