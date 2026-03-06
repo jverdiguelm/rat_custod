@@ -195,6 +195,10 @@ app.get('/api/me', generalLimiter, requireAuth, (req, res) => {
   res.json({ username: req.session.username });
 });
 
+// Serve /assets publicly before auth so the login page can load its background
+// images and other static assets without being redirected to /login.
+app.use('/assets', express.static(path.join(publicDir, 'assets')));
+
 // ---- Apply auth and CSRF protection to all remaining routes ----
 app.use(generalLimiter);
 app.use(requireAuth);
